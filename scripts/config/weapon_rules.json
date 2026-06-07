@@ -1,0 +1,51 @@
+{
+  "weapons": [
+    {
+      "weapon": "ASVAL",
+      "dir": "ASVAL",
+      "mode": "asval"
+    },
+    {
+      "weapon": "K416",
+      "dir": "K416",
+      "mode": "k416",
+      "idPrefix": "K4"
+    },
+    {
+      "weapon": "QBZ95",
+      "dir": "QBZ95",
+      "mode": "qbz95"
+    },
+    {
+      "weapon": "腾龙",
+      "dir": "腾龙",
+      "mode": "tenglong"
+    },
+    {
+      "weapon": "AUG",
+      "dir": "AUG",
+      "mode": "template_with_material"
+    },
+    {
+      "weapon": "KC17",
+      "dir": "KC17",
+      "mode": "template_with_material"
+    },
+    {
+      "weapon": "M4A1",
+      "dir": "M4A1",
+      "mode": "template_with_material",
+      "defaultMaterial": "Q"
+    },
+    {
+      "weapon": "SCARH",
+      "dir": "SCARH",
+      "mode": "pure_template"
+    },
+    {
+      "weapon": "Vector",
+      "dir": "Vector",
+      "mode": "pure_template"
+    }
+  ]
+}

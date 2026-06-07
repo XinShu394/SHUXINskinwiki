@@ -1,0 +1,23 @@
+# systemd 服务文件 —— 让评论 API 开机自启、崩溃自重启
+# 使用方法：
+#   sudo cp zpbk-api.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable zpbk-api
+#   sudo systemctl start zpbk-api
+#   sudo systemctl status zpbk-api
+
+[Unit]
+Description=砖皮百科 评论 API
+After=network.target
+
+[Service]
+Type=simple
+# ⚠️ 把下面路径改成你在 ECS 上的实际路径
+WorkingDirectory=/var/www/zpbk/server
+ExecStart=/var/www/zpbk/server/venv/bin/gunicorn -w 4 -b 127.0.0.1:5200 --timeout 30 app:app
+Restart=always
+RestartSec=5
+User=www-data
+
+[Install]
+WantedBy=multi-user.target

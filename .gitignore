@@ -1,0 +1,31 @@
+# ── 武器图片文件夹（上传到 OSS，不进 GitHub）──────────────
+ASVAL/
+AUG/
+K416/
+KC17/
+M4A1/
+M250/
+MP7/
+QBZ95/
+SCARH/
+Vector/
+腾龙/
+枪皮总封面/
+
+# ── 旧版本副本（可以直接删掉，占了 ~5.7GB）─────────────────
+skin-wiki/
+skinwiki/
+
+# ── IDE / 系统文件 ────────────────────────────────────────
+.cursor/
+.DS_Store
+Thumbs.db
+
+# ── Python 运行时 ─────────────────────────────────────────
+server/venv/
+server/__pycache__/
+server/*.pyc
+__pycache__/
+
+# ── 评论数据库（生产数据，不进代码仓库）────────────────────
+server/comments.db
