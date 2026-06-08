@@ -37,6 +37,45 @@ body {
   object-fit: contain;
 }
 
+.brand-contact {
+  margin-bottom: 14px;
+  padding: 10px 10px;
+  background: #0c1a22;
+  border: 1px solid #1d333d;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-contact p {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #7ca8be;
+  letter-spacing: 0.5px;
+}
+
+.brand-contact a,
+.brand-contact span {
+  font-size: 11px;
+  color: #9dc4d8;
+  text-decoration: none;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.brand-contact a:hover {
+  color: #38bde0;
+  text-decoration: underline;
+}
+
+.brand-contact-sub {
+  color: #5a8090 !important;
+  font-size: 10px !important;
+  margin-top: 2px;
+}
+
 .nav-btn {
   width: 100%;
   text-align: left;
