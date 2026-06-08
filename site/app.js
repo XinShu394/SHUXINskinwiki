@@ -1,20 +1,20 @@
-ï»¿(function () {
-  const qualityMap = { U: "ä¼˜å“", J: "æå“" };
-  const materialMap = { T: "é€å…‰", G: "è´µé‡‘å±", Q: "å…¶ä»–", L: "é•­å°„", M: "æ¼†é¢", Z: "æœ¨è´¨" };
+(function () {
+  const qualityMap = { U: "ÓÅÆ·", J: "¼«Æ·" };
+  const materialMap = { T: "Í¸¹â", G: "¹ó½ğÊô", Q: "ÆäËû", L: "ÀØÉä", M: "ÆáÃæ", Z: "Ä¾ÖÊ" };
   const colorMap = {
-    "00": "å•è‰²",
-    "01": "ç™½è‰²",
-    "02": "çº¢è‰²",
-    "03": "é»„è‰²",
-    "04": "é’è‰²",
-    "05": "ç´«è‰²",
-    "06": "æ£•è‰²",
-    "07": "é»‘è‰²",
-    "08": "ç°è‰²",
-    "09": "æ©™è‰²",
-    "10": "ç»¿è‰²",
-    "11": "è“è‰²",
-    "12": "ç²‰è‰²",
+    "00": "µ¥É«",
+    "01": "°×É«",
+    "02": "ºìÉ«",
+    "03": "»ÆÉ«",
+    "04": "ÇàÉ«",
+    "05": "×ÏÉ«",
+    "06": "×ØÉ«",
+    "07": "ºÚÉ«",
+    "08": "»ÒÉ«",
+    "09": "³ÈÉ«",
+    "10": "ÂÌÉ«",
+    "11": "À¶É«",
+    "12": "·ÛÉ«",
   };
 
   const metaById = window.SKIN_META || {};
@@ -24,76 +24,76 @@
   const tutorialImagesByWeapon = {
     K416: [
       {
-        src: "https://skinwiki.oss-accelerate.aliyuncs.com/K416/ä¸Šæ–¹æ•™ç¨‹/Snipaste_2026-05-26_22-48-20.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/ÉÏ·½½Ì³Ì/Snipaste_2026-05-26_22-48-20.png",
         slot: "tutorial-main",
-        alt: "æ•™ç¨‹ç¤ºæ„å›¾-ä¸»å›¾",
+        alt: "½Ì³ÌÊ¾ÒâÍ¼-Ö÷Í¼",
       },
       {
-        src: "https://skinwiki.oss-accelerate.aliyuncs.com/K416/ä¸Šæ–¹æ•™ç¨‹/Snipaste_2026-05-26_22-48-48.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/ÉÏ·½½Ì³Ì/Snipaste_2026-05-26_22-48-48.png",
         slot: "tutorial-pitfall",
-        alt: "æ•™ç¨‹ç¤ºæ„å›¾-å‘ç‚¹",
+        alt: "½Ì³ÌÊ¾ÒâÍ¼-¿Óµã",
       },
       {
-        src: "https://skinwiki.oss-accelerate.aliyuncs.com/K416/ä¸Šæ–¹æ•™ç¨‹/Snipaste_2026-05-26_23-17-41.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/ÉÏ·½½Ì³Ì/Snipaste_2026-05-26_23-17-41.png",
         slot: "tutorial-pitfall-extra",
-        alt: "æ•™ç¨‹ç¤ºæ„å›¾-å‘ç‚¹è¡¥å……",
+        alt: "½Ì³ÌÊ¾ÒâÍ¼-¿Óµã²¹³ä",
       },
     ],
     QBZ95: [
       {
-        src: "https://skinwiki.oss-accelerate.aliyuncs.com/QBZ95/ä¸Šæ–¹æ•™ç¨‹.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/QBZ95/ÉÏ·½½Ì³Ì.png",
         slot: "tutorial-main",
-        alt: "QBZ95 æ•™ç¨‹å›¾",
+        alt: "QBZ95 ½Ì³ÌÍ¼",
       },
     ],
     SCARH: [
       {
-        src: "https://skinwiki.oss-accelerate.aliyuncs.com/SCARH/ä¸Šæ–¹æ•™ç¨‹.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/SCARH/ÉÏ·½½Ì³Ì.png",
         slot: "tutorial-main",
-        alt: "SCARH æ•™ç¨‹å›¾",
+        alt: "SCARH ½Ì³ÌÍ¼",
       },
     ],
     Vector: [
       {
-        src: "https://skinwiki.oss-accelerate.aliyuncs.com/Vector/ä¸Šæ–¹æ•™ç¨‹å›¾ç‰‡.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Vector/ÉÏ·½½Ì³ÌÍ¼Æ¬.png",
         slot: "tutorial-main",
-        alt: "Vector æ•™ç¨‹å›¾",
+        alt: "Vector ½Ì³ÌÍ¼",
       },
     ],
     M4A1: [
       {
-        src: "https://skinwiki.oss-accelerate.aliyuncs.com/M4A1/ä¸Šæ–¹æ•™ç¨‹.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/M4A1/ÉÏ·½½Ì³Ì.png",
         slot: "tutorial-main",
-        alt: "M4A1 æ•™ç¨‹å›¾",
+        alt: "M4A1 ½Ì³ÌÍ¼",
       },
       {
-        src: "https://skinwiki.oss-accelerate.aliyuncs.com/M4A1/ä¸Šæ–¹æ•™ç¨‹2.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/M4A1/ÉÏ·½½Ì³Ì2.png",
         slot: "tutorial-pitfall",
-        alt: "M4A1 æ•™ç¨‹å›¾2",
+        alt: "M4A1 ½Ì³ÌÍ¼2",
       },
     ],
     KC17: [
       {
-        src: "https://skinwiki.oss-accelerate.aliyuncs.com/KC17/ä¸Šæ–¹æ•™ç¨‹/ä¸Šæ–¹æ•™ç¨‹.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/KC17/ÉÏ·½½Ì³Ì/ÉÏ·½½Ì³Ì.png",
         slot: "tutorial-main",
-        alt: "KC17 æ•™ç¨‹å›¾",
+        alt: "KC17 ½Ì³ÌÍ¼",
       },
       {
-        src: "https://skinwiki.oss-accelerate.aliyuncs.com/KC17/ä¸Šæ–¹æ•™ç¨‹/ä¸Šæ–¹æ•™ç¨‹2.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/KC17/ÉÏ·½½Ì³Ì/ÉÏ·½½Ì³Ì2.png",
         slot: "tutorial-pitfall",
-        alt: "KC17 æ•™ç¨‹å›¾2",
+        alt: "KC17 ½Ì³ÌÍ¼2",
       },
     ],
-    è…¾é¾™: [
+    ÌÚÁú: [
       {
-        src: "https://skinwiki.oss-accelerate.aliyuncs.com/è…¾é¾™/ä¸Šæ–¹æ•™ç¨‹.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ÌÚÁú/ÉÏ·½½Ì³Ì.png",
         slot: "tutorial-main",
-        alt: "è…¾é¾™ æ•™ç¨‹å›¾",
+        alt: "ÌÚÁú ½Ì³ÌÍ¼",
       },
       {
-        src: "https://skinwiki.oss-accelerate.aliyuncs.com/è…¾é¾™/ä¸Šæ–¹æ•™ç¨‹2.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ÌÚÁú/ÉÏ·½½Ì³Ì2.png",
         slot: "tutorial-pitfall",
-        alt: "è…¾é¾™ æ•™ç¨‹å›¾2",
+        alt: "ÌÚÁú ½Ì³ÌÍ¼2",
       },
     ],
   };
@@ -159,11 +159,11 @@
     const c1 = colorCode.slice(0, 2);
     const c2 = colorCode.slice(2, 4);
 
-    let colorLabel = colorCode ? "æœªçŸ¥é…è‰²" : "";
+    let colorLabel = colorCode ? "Î´ÖªÅäÉ«" : "";
     if (!colorCode) {
       colorLabel = "";
     } else if (colorCode === "1111") {
-      colorLabel = "æœªçŸ¥é…è‰²";
+      colorLabel = "Î´ÖªÅäÉ«";
     } else {
       const color1 = colorMap[c1] || c1;
       const color2 = colorMap[c2] || c2;
@@ -177,10 +177,10 @@
       name:
         (meta.name && String(meta.name).trim()) ||
         (item.template && String(item.template).trim()) ||
-        "æœªå‘½å",
+        "Î´ÃüÃû",
       rating: meta.rating || "",
       comment: meta.comment || "",
-      qualityLabel: normalizeLabel(item.qualityLabel, qualityMap[qualityCode] || "æœªæ ‡æ³¨"),
+      qualityLabel: normalizeLabel(item.qualityLabel, qualityMap[qualityCode] || "Î´±ê×¢"),
       materialLabel: normalizeLabel(item.materialLabel, decodeMaterialLabel(materialCode)),
       colorLabel: normalizeLabel(item.colorLabel, colorLabel),
     };
@@ -219,7 +219,7 @@
   }
 
   function renderList() {
-    pageTitle.textContent = state.nav === "home" ? "é¦–é¡µ" : state.nav;
+    pageTitle.textContent = state.nav === "home" ? "Ê×Ò³" : state.nav;
     detailView.classList.add("hidden");
     homeGuide.classList.add("hidden");
     homeView.classList.add("hidden");
@@ -261,7 +261,7 @@
       .map(
         (s) => `
       <article class="card" data-id="${escapeHtml(s.id)}">
-        <img src="${encodeURI(s.imageA)}" alt="${escapeHtml(s.id)} Aå›¾" />
+        <img src="${encodeURI(s.imageA)}" alt="${escapeHtml(s.id)} AÍ¼" />
         <div class="card-body">
           <div class="card-id">${escapeHtml(s.name)}</div>
           <div class="card-name">${escapeHtml(s.id)}</div>
@@ -301,12 +301,12 @@
 
     const metaList = document.getElementById("metaList");
     metaList.innerHTML = `
-      <li><strong>æ­¦å™¨ï¼š</strong>${escapeHtml(s.weapon)}</li>
-      <li><strong>å“è´¨ï¼š</strong>${escapeHtml(s.qualityLabel)}</li>
-      ${s.materialLabel ? `<li><strong>æè´¨ï¼š</strong>${escapeHtml(s.materialLabel)}</li>` : ""}
-      ${s.colorLabel ? `<li><strong>é…è‰²ï¼š</strong>${escapeHtml(s.colorLabel)}</li>` : ""}
-      ${s.rating ? `<li><strong>è¯„åˆ†ï¼š</strong>${escapeHtml(s.rating)}</li>` : ""}
-      ${s.comment ? `<li><strong>ç®€è¯„ï¼š</strong>${escapeHtml(s.comment)}</li>` : ""}
+      <li><strong>ÎäÆ÷£º</strong>${escapeHtml(s.weapon)}</li>
+      <li><strong>Æ·ÖÊ£º</strong>${escapeHtml(s.qualityLabel)}</li>
+      ${s.materialLabel ? `<li><strong>²ÄÖÊ£º</strong>${escapeHtml(s.materialLabel)}</li>` : ""}
+      ${s.colorLabel ? `<li><strong>ÅäÉ«£º</strong>${escapeHtml(s.colorLabel)}</li>` : ""}
+      ${s.rating ? `<li><strong>ÆÀ·Ö£º</strong>${escapeHtml(s.rating)}</li>` : ""}
+      ${s.comment ? `<li><strong>¼òÆÀ£º</strong>${escapeHtml(s.comment)}</li>` : ""}
     `;
 
     if (window.Comments) window.Comments.load(s.id);
@@ -358,10 +358,10 @@
       .map(
         (c) => `
       <article class="card weapon-card ${c.enabled ? "enabled" : "disabled"}" data-weapon="${escapeHtml(c.weapon)}">
-        <img src="${encodeURI(c.src)}" alt="${escapeHtml(c.title)} æ€»å°é¢" />
+        <img src="${encodeURI(c.src)}" alt="${escapeHtml(c.title)} ×Ü·âÃæ" />
         <div class="card-body">
           <div class="card-id">${escapeHtml(c.title)}</div>
-          <div class="card-name">${c.enabled ? "è¿›å…¥å›¾é‰´" : "å»ºè®¾ä¸­"}</div>
+          <div class="card-name">${c.enabled ? "½øÈëÍ¼¼ø" : "½¨ÉèÖĞ"}</div>
         </div>
       </article>
     `
@@ -386,7 +386,7 @@
 
   function renderTags(skin) {
     return [skin.qualityLabel, skin.materialLabel, skin.colorLabel]
-      .filter((tag) => tag && tag !== "æœªæ ‡æ³¨")
+      .filter((tag) => tag && tag !== "Î´±ê×¢")
       .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`)
       .join("");
   }
@@ -397,7 +397,7 @@
     const weapons = [...new Set([...coverWeapons, ...dataWeapons])];
 
     sideNav.innerHTML = [
-      '<button class="nav-btn active" data-nav="home">é¦–é¡µ</button>',
+      '<button class="nav-btn active" data-nav="home">Ê×Ò³</button>',
       ...weapons.map((weapon) => `<button class="nav-btn" data-nav="${escapeHtml(weapon)}">${escapeHtml(weapon)}</button>`),
     ].join("");
 
@@ -411,7 +411,7 @@
     });
   }
 
-  // â”€â”€ æœ¬åœ°å¼€å‘å·¥å…·ï¼šæ ¡éªŒå¹¶æ›´æ–° â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ©¤©¤ ±¾µØ¿ª·¢¹¤¾ß£ºĞ£Ñé²¢¸üĞÂ ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤
   const DEV_API = "http://localhost:8765";
 
   const devTools = document.getElementById("devTools");
@@ -433,7 +433,7 @@
         populateWeaponSelect();
       }
     } catch {
-      // é™é»˜ï¼šéæœ¬åœ°å¼€å‘ç¯å¢ƒä¸æ˜¾ç¤ºå·¥å…·æ 
+      // ¾²Ä¬£º·Ç±¾µØ¿ª·¢»·¾³²»ÏÔÊ¾¹¤¾ßÀ¸
     }
   }
 
@@ -457,10 +457,10 @@
 
   function renderValidateResult(data) {
     if (data.ok) {
-      validatePanelTitle.textContent = "æ ¡éªŒé€šè¿‡ âœ“";
+      validatePanelTitle.textContent = "Ğ£ÑéÍ¨¹ı ?";
       validatePanelTitle.className = "validate-title-ok";
     } else {
-      validatePanelTitle.textContent = "æ ¡éªŒå¤±è´¥ âœ—";
+      validatePanelTitle.textContent = "Ğ£ÑéÊ§°Ü ?";
       validatePanelTitle.className = "validate-title-err";
     }
 
@@ -478,7 +478,7 @@
       ${
         warnings.length
           ? `<div class="validate-warnings">
-              <div class="validate-warn-head">âš  å‘Šè­¦ï¼ˆ${warnings.length} æ¡ï¼‰</div>
+              <div class="validate-warn-head">? ¸æ¾¯£¨${warnings.length} Ìõ£©</div>
               ${warnings.map((w) => `<div class="validate-warn-line">${escapeHtml(w)}</div>`).join("")}
             </div>`
           : ""
@@ -486,13 +486,13 @@
       ${
         !data.ok && data.stderr
           ? `<div class="validate-errors">
-              <div class="validate-error-head">é”™è¯¯è¯¦æƒ…</div>
+              <div class="validate-error-head">´íÎóÏêÇé</div>
               <pre class="validate-pre">${escapeHtml(data.stderr)}</pre>
             </div>`
           : ""
       }
       <div class="validate-reload-hint">
-        ${data.ok ? "æ•°æ®å·²æ›´æ–°ï¼Œ<button class='validate-reload-btn' onclick='location.reload()'>åˆ·æ–°é¡µé¢</button> ç”Ÿæ•ˆ" : "æœªå†™å…¥ siteï¼Œæ— éœ€åˆ·æ–°"}
+        ${data.ok ? "Êı¾İÒÑ¸üĞÂ£¬<button class='validate-reload-btn' onclick='location.reload()'>Ë¢ĞÂÒ³Ãæ</button> ÉúĞ§" : "Î´Ğ´Èë site£¬ÎŞĞèË¢ĞÂ"}
       </div>
     `;
   }
@@ -503,7 +503,7 @@
       const normalize = validateNormalize.checked;
 
       openValidatePanel();
-      validatePanelTitle.textContent = "æ ¡éªŒä¸­â€¦";
+      validatePanelTitle.textContent = "Ğ£ÑéÖĞ¡­";
       validatePanelTitle.className = "";
       validatePanelBody.innerHTML = '<div class="validate-spinner"></div>';
       validateBtn.disabled = true;
@@ -517,7 +517,7 @@
         const data = await res.json();
         renderValidateResult(data);
       } catch (err) {
-        validatePanelTitle.textContent = "è¯·æ±‚å¤±è´¥";
+        validatePanelTitle.textContent = "ÇëÇóÊ§°Ü";
         validatePanelTitle.className = "validate-title-err";
         validatePanelBody.innerHTML = `<div class="validate-line">${escapeHtml(String(err))}</div>`;
       } finally {

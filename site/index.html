@@ -19,6 +19,10 @@
           <a href="https://github.com/XinShu394/SHUXINskinwiki" target="_blank">GitHub 仓库</a>
           <span>Q群：765759268</span>
           <span class="brand-contact-sub">刚刚起步小群，大家一起玩 👋</span>
+          <div class="action-btns">
+            <button id="submitBtn" class="action-btn submit-btn">我要投稿</button>
+            <button id="reviewBtn" class="action-btn review-btn">审核通道</button>
+          </div>
         </div>
         <nav id="sideNav">
           <button class="nav-btn active" data-nav="home">首页</button>
@@ -146,6 +150,9 @@
           </div>
         </div>
 
+        <div id="submitPanel" class="submit-panel hidden" role="dialog" aria-modal="true"></div>
+        <div id="reviewPanel" class="review-panel hidden" role="dialog" aria-modal="true"></div>
+
         <div id="lightbox" class="lightbox hidden" role="dialog" aria-modal="true">
           <button id="lightboxClose" class="lightbox-close" aria-label="关闭大图">×</button>
           <img id="lightboxImage" alt="大图预览" />
@@ -159,5 +166,7 @@
     <script src="./covers.js"></script>
     <script src="./comments.js"></script>
     <script src="./app.js"></script>
+    <script src="./submit.js"></script>
+    <script src="./review.js"></script>
   </body>
   </html>
