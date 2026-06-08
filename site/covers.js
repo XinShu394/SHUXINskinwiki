@@ -1,74 +1,74 @@
 window.WEAPON_COVERS = [
   {
     "weapon": "ASVAL",
-    "title": "ASVAL-������",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ǹƤ�ܷ���/ASVAL-������.png",
+    "title": "ASVAL-悬赏令",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/ASVAL-悬赏令.png",
     "enabled": true
   },
   {
     "weapon": "AUG",
-    "title": "AUG-�����Ӧ",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ǹƤ�ܷ���/AUG-�����Ӧ.png",
+    "title": "AUG-气象感应",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/AUG-气象感应.png",
     "enabled": true
   },
   {
     "weapon": "K416",
-    "title": "K416-��������",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ǹƤ�ܷ���/K416-��������.png",
+    "title": "K416-命运王牌",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/K416-命运王牌.png",
     "enabled": true
   },
   {
     "weapon": "KC17",
-    "title": "KC17-�����Ԫ",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ǹƤ�ܷ���/KC17-�����Ԫ.png",
+    "title": "KC17-造物纪元",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/KC17-造物纪元.png",
     "enabled": true
   },
   {
     "weapon": "M250",
-    "title": "M250-�������S2",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ǹƤ�ܷ���/M250-�������S2.png",
+    "title": "M250-电玩高手S2",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/M250-电玩高手S2.png",
     "enabled": false
   },
   {
     "weapon": "M4A1",
-    "title": "M4A1-�⾵����",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ǹƤ�ܷ���/M4A1-�⾵����.png",
+    "title": "M4A1-棱镜攻势",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/M4A1-棱镜攻势.png",
     "enabled": true
   },
   {
     "weapon": "M7",
-    "title": "M7-�⾵����S2",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ǹƤ�ܷ���/M7-�⾵����S2.png",
+    "title": "M7-棱镜攻势S2",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/M7-棱镜攻势S2.png",
     "enabled": false
   },
   {
     "weapon": "MP7",
-    "title": "MP7-�������S2",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ǹƤ�ܷ���/MP7-�������S2.png",
+    "title": "MP7-电玩高手S2",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/MP7-电玩高手S2.png",
     "enabled": false
   },
   {
     "weapon": "QBZ95",
-    "title": "QBZ95-1-����֮��",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ǹƤ�ܷ���/QBZ95-1-����֮��.png",
+    "title": "QBZ95-1-王牌之剑",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/QBZ95-1-王牌之剑.png",
     "enabled": true
   },
   {
     "weapon": "SCARH",
-    "title": "SCARH-�������",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ǹƤ�ܷ���/SCARH-�������.png",
+    "title": "SCARH-电玩高手",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/SCARH-电玩高手.png",
     "enabled": true
   },
   {
     "weapon": "Vector",
-    "title": "Vector-����ɯ",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ǹƤ�ܷ���/Vector-����ɯ.png",
+    "title": "Vector-美杜莎",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/Vector-美杜莎.png",
     "enabled": true
   },
   {
-    "weapon": "����",
-    "title": "����-�����Ӧ",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ǹƤ�ܷ���/����-�����Ӧ.png",
+    "weapon": "腾龙",
+    "title": "腾龙-气象感应",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/腾龙-气象感应.png",
     "enabled": true
   }
 ];

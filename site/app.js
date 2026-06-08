@@ -1,20 +1,20 @@
 (function () {
-  const qualityMap = { U: "��Ʒ", J: "��Ʒ" };
-  const materialMap = { T: "͸��", G: "�����", Q: "����", L: "����", M: "����", Z: "ľ��" };
+  const qualityMap = { U: "优品", J: "极品" };
+  const materialMap = { T: "透光", G: "贵金属", Q: "其他", L: "镭射", M: "漆面", Z: "木质" };
   const colorMap = {
-    "00": "��ɫ",
-    "01": "��ɫ",
-    "02": "��ɫ",
-    "03": "��ɫ",
-    "04": "��ɫ",
-    "05": "��ɫ",
-    "06": "��ɫ",
-    "07": "��ɫ",
-    "08": "��ɫ",
-    "09": "��ɫ",
-    "10": "��ɫ",
-    "11": "��ɫ",
-    "12": "��ɫ",
+    "00": "单色",
+    "01": "白色",
+    "02": "红色",
+    "03": "黄色",
+    "04": "青色",
+    "05": "紫色",
+    "06": "棕色",
+    "07": "黑色",
+    "08": "灰色",
+    "09": "橙色",
+    "10": "绿色",
+    "11": "蓝色",
+    "12": "粉色",
   };
 
   const metaById = window.SKIN_META || {};
@@ -24,76 +24,76 @@
   const tutorialImagesByWeapon = {
     K416: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/�Ϸ��̳�/Snipaste_2026-05-26_22-48-20.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/上方教程/Snipaste_2026-05-26_22-48-20.png",
         slot: "tutorial-main",
-        alt: "�̳�ʾ��ͼ-��ͼ",
+        alt: "教程示意图-主图",
       },
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/�Ϸ��̳�/Snipaste_2026-05-26_22-48-48.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/上方教程/Snipaste_2026-05-26_22-48-48.png",
         slot: "tutorial-pitfall",
-        alt: "�̳�ʾ��ͼ-�ӵ�",
+        alt: "教程示意图-坑点",
       },
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/�Ϸ��̳�/Snipaste_2026-05-26_23-17-41.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/上方教程/Snipaste_2026-05-26_23-17-41.png",
         slot: "tutorial-pitfall-extra",
-        alt: "�̳�ʾ��ͼ-�ӵ㲹��",
+        alt: "教程示意图-坑点补充",
       },
     ],
     QBZ95: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/QBZ95/�Ϸ��̳�.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/QBZ95/上方教程.png",
         slot: "tutorial-main",
-        alt: "QBZ95 �̳�ͼ",
+        alt: "QBZ95 教程图",
       },
     ],
     SCARH: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/SCARH/�Ϸ��̳�.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/SCARH/上方教程.png",
         slot: "tutorial-main",
-        alt: "SCARH �̳�ͼ",
+        alt: "SCARH 教程图",
       },
     ],
     Vector: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Vector/�Ϸ��̳�ͼƬ.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Vector/上方教程图片.png",
         slot: "tutorial-main",
-        alt: "Vector �̳�ͼ",
+        alt: "Vector 教程图",
       },
     ],
     M4A1: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/M4A1/�Ϸ��̳�.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/M4A1/上方教程.png",
         slot: "tutorial-main",
-        alt: "M4A1 �̳�ͼ",
+        alt: "M4A1 教程图",
       },
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/M4A1/�Ϸ��̳�2.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/M4A1/上方教程2.png",
         slot: "tutorial-pitfall",
-        alt: "M4A1 �̳�ͼ2",
+        alt: "M4A1 教程图2",
       },
     ],
     KC17: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/KC17/�Ϸ��̳�/�Ϸ��̳�.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/KC17/上方教程/上方教程.png",
         slot: "tutorial-main",
-        alt: "KC17 �̳�ͼ",
+        alt: "KC17 教程图",
       },
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/KC17/�Ϸ��̳�/�Ϸ��̳�2.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/KC17/上方教程/上方教程2.png",
         slot: "tutorial-pitfall",
-        alt: "KC17 �̳�ͼ2",
+        alt: "KC17 教程图2",
       },
     ],
-    ����: [
+    腾龙: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/����/�Ϸ��̳�.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/腾龙/上方教程.png",
         slot: "tutorial-main",
-        alt: "���� �̳�ͼ",
+        alt: "腾龙 教程图",
       },
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/����/�Ϸ��̳�2.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/腾龙/上方教程2.png",
         slot: "tutorial-pitfall",
-        alt: "���� �̳�ͼ2",
+        alt: "腾龙 教程图2",
       },
     ],
   };
@@ -159,11 +159,11 @@
     const c1 = colorCode.slice(0, 2);
     const c2 = colorCode.slice(2, 4);
 
-    let colorLabel = colorCode ? "δ֪��ɫ" : "";
+    let colorLabel = colorCode ? "未知配色" : "";
     if (!colorCode) {
       colorLabel = "";
     } else if (colorCode === "1111") {
-      colorLabel = "δ֪��ɫ";
+      colorLabel = "未知配色";
     } else {
       const color1 = colorMap[c1] || c1;
       const color2 = colorMap[c2] || c2;
@@ -177,10 +177,10 @@
       name:
         (meta.name && String(meta.name).trim()) ||
         (item.template && String(item.template).trim()) ||
-        "δ����",
+        "未命名",
       rating: meta.rating || "",
       comment: meta.comment || "",
-      qualityLabel: normalizeLabel(item.qualityLabel, qualityMap[qualityCode] || "δ��ע"),
+      qualityLabel: normalizeLabel(item.qualityLabel, qualityMap[qualityCode] || "未标注"),
       materialLabel: normalizeLabel(item.materialLabel, decodeMaterialLabel(materialCode)),
       colorLabel: normalizeLabel(item.colorLabel, colorLabel),
     };
@@ -219,7 +219,7 @@
   }
 
   function renderList() {
-    pageTitle.textContent = state.nav === "home" ? "��ҳ" : state.nav;
+    pageTitle.textContent = state.nav === "home" ? "首页" : state.nav;
     detailView.classList.add("hidden");
     homeGuide.classList.add("hidden");
     homeView.classList.add("hidden");
@@ -261,7 +261,7 @@
       .map(
         (s) => `
       <article class="card" data-id="${escapeHtml(s.id)}">
-        <img src="${encodeURI(s.imageA)}" alt="${escapeHtml(s.id)} Aͼ" />
+        <img src="${encodeURI(s.imageA)}" alt="${escapeHtml(s.id)} A图" />
         <div class="card-body">
           <div class="card-id">${escapeHtml(s.name)}</div>
           <div class="card-name">${escapeHtml(s.id)}</div>
@@ -301,12 +301,12 @@
 
     const metaList = document.getElementById("metaList");
     metaList.innerHTML = `
-      <li><strong>������</strong>${escapeHtml(s.weapon)}</li>
-      <li><strong>Ʒ�ʣ�</strong>${escapeHtml(s.qualityLabel)}</li>
-      ${s.materialLabel ? `<li><strong>���ʣ�</strong>${escapeHtml(s.materialLabel)}</li>` : ""}
-      ${s.colorLabel ? `<li><strong>��ɫ��</strong>${escapeHtml(s.colorLabel)}</li>` : ""}
-      ${s.rating ? `<li><strong>���֣�</strong>${escapeHtml(s.rating)}</li>` : ""}
-      ${s.comment ? `<li><strong>������</strong>${escapeHtml(s.comment)}</li>` : ""}
+      <li><strong>武器：</strong>${escapeHtml(s.weapon)}</li>
+      <li><strong>品质：</strong>${escapeHtml(s.qualityLabel)}</li>
+      ${s.materialLabel ? `<li><strong>材质：</strong>${escapeHtml(s.materialLabel)}</li>` : ""}
+      ${s.colorLabel ? `<li><strong>配色：</strong>${escapeHtml(s.colorLabel)}</li>` : ""}
+      ${s.rating ? `<li><strong>评分：</strong>${escapeHtml(s.rating)}</li>` : ""}
+      ${s.comment ? `<li><strong>简评：</strong>${escapeHtml(s.comment)}</li>` : ""}
     `;
 
     if (window.Comments) window.Comments.load(s.id);
@@ -358,10 +358,10 @@
       .map(
         (c) => `
       <article class="card weapon-card ${c.enabled ? "enabled" : "disabled"}" data-weapon="${escapeHtml(c.weapon)}">
-        <img src="${encodeURI(c.src)}" alt="${escapeHtml(c.title)} �ܷ���" />
+        <img src="${encodeURI(c.src)}" alt="${escapeHtml(c.title)} 总封面" />
         <div class="card-body">
           <div class="card-id">${escapeHtml(c.title)}</div>
-          <div class="card-name">${c.enabled ? "����ͼ��" : "������"}</div>
+          <div class="card-name">${c.enabled ? "进入图鉴" : "建设中"}</div>
         </div>
       </article>
     `
@@ -386,7 +386,7 @@
 
   function renderTags(skin) {
     return [skin.qualityLabel, skin.materialLabel, skin.colorLabel]
-      .filter((tag) => tag && tag !== "δ��ע")
+      .filter((tag) => tag && tag !== "未标注")
       .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`)
       .join("");
   }
@@ -397,7 +397,7 @@
     const weapons = [...new Set([...coverWeapons, ...dataWeapons])];
 
     sideNav.innerHTML = [
-      '<button class="nav-btn active" data-nav="home">��ҳ</button>',
+      '<button class="nav-btn active" data-nav="home">首页</button>',
       ...weapons.map((weapon) => `<button class="nav-btn" data-nav="${escapeHtml(weapon)}">${escapeHtml(weapon)}</button>`),
     ].join("");
 
@@ -411,7 +411,7 @@
     });
   }
 
-  // ���� ���ؿ������ߣ�У�鲢���� ����������������������������������������������������������������������������������������������
+  // ── 本地开发工具：校验并更新 ───────────────────────────────────────────────
   const DEV_API = "http://localhost:8765";
 
   const devTools = document.getElementById("devTools");
@@ -433,7 +433,7 @@
         populateWeaponSelect();
       }
     } catch {
-      // ��Ĭ���Ǳ��ؿ�����������ʾ������
+      // 静默：非本地开发环境不显示工具栏
     }
   }
 
@@ -457,10 +457,10 @@
 
   function renderValidateResult(data) {
     if (data.ok) {
-      validatePanelTitle.textContent = "У��ͨ�� ?";
+      validatePanelTitle.textContent = "校验通过 ✓";
       validatePanelTitle.className = "validate-title-ok";
     } else {
-      validatePanelTitle.textContent = "У��ʧ�� ?";
+      validatePanelTitle.textContent = "校验失败 ✗";
       validatePanelTitle.className = "validate-title-err";
     }
 
@@ -478,7 +478,7 @@
       ${
         warnings.length
           ? `<div class="validate-warnings">
-              <div class="validate-warn-head">? �澯��${warnings.length} ����</div>
+              <div class="validate-warn-head">⚠ 告警（${warnings.length} 条）</div>
               ${warnings.map((w) => `<div class="validate-warn-line">${escapeHtml(w)}</div>`).join("")}
             </div>`
           : ""
@@ -486,13 +486,13 @@
       ${
         !data.ok && data.stderr
           ? `<div class="validate-errors">
-              <div class="validate-error-head">��������</div>
+              <div class="validate-error-head">错误详情</div>
               <pre class="validate-pre">${escapeHtml(data.stderr)}</pre>
             </div>`
           : ""
       }
       <div class="validate-reload-hint">
-        ${data.ok ? "�����Ѹ��£�<button class='validate-reload-btn' onclick='location.reload()'>ˢ��ҳ��</button> ��Ч" : "δд�� site������ˢ��"}
+        ${data.ok ? "数据已更新，<button class='validate-reload-btn' onclick='location.reload()'>刷新页面</button> 生效" : "未写入 site，无需刷新"}
       </div>
     `;
   }
@@ -503,7 +503,7 @@
       const normalize = validateNormalize.checked;
 
       openValidatePanel();
-      validatePanelTitle.textContent = "У���С�";
+      validatePanelTitle.textContent = "校验中…";
       validatePanelTitle.className = "";
       validatePanelBody.innerHTML = '<div class="validate-spinner"></div>';
       validateBtn.disabled = true;
@@ -517,7 +517,7 @@
         const data = await res.json();
         renderValidateResult(data);
       } catch (err) {
-        validatePanelTitle.textContent = "����ʧ��";
+        validatePanelTitle.textContent = "请求失败";
         validatePanelTitle.className = "validate-title-err";
         validatePanelBody.innerHTML = `<div class="validate-line">${escapeHtml(String(err))}</div>`;
       } finally {
