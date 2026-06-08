@@ -13,7 +13,7 @@ CONFIG_DIR = ROOT / "scripts" / "config"
 
 # 图片存储基础地址（OSS）
 # 若留空则使用相对路径 "../武器/..."（仅本地开发用）
-OSS_BASE = "https://skinwiki.oss-accelerate.aliyuncs.com"
+OSS_BASE = "https://skinwiki.oss-cn-guangzhou.aliyuncs.com"
 
 QUALITY_LABEL = {"U": "优品", "J": "极品"}
 MATERIAL_LABEL = {"T": "透光", "G": "贵金属", "Q": "其他", "L": "镭射", "M": "漆面", "Z": "木质"}
