@@ -1,20 +1,20 @@
 (function () {
-  const qualityMap = { U: "ÓÅÆ·", J: "¼«Æ·" };
-  const materialMap = { T: "Í¸¹â", G: "¹ó½ðÊô", Q: "ÆäËû", L: "ÀØÉä", M: "ÆáÃæ", Z: "Ä¾ÖÊ" };
+  const qualityMap = { U: "ï¿½ï¿½Æ·", J: "ï¿½ï¿½Æ·" };
+  const materialMap = { T: "Í¸ï¿½ï¿½", G: "ï¿½ï¿½ï¿½ï¿½ï¿½", Q: "ï¿½ï¿½ï¿½ï¿½", L: "ï¿½ï¿½ï¿½ï¿½", M: "ï¿½ï¿½ï¿½ï¿½", Z: "Ä¾ï¿½ï¿½" };
   const colorMap = {
-    "00": "µ¥É«",
-    "01": "°×É«",
-    "02": "ºìÉ«",
-    "03": "»ÆÉ«",
-    "04": "ÇàÉ«",
-    "05": "×ÏÉ«",
-    "06": "×ØÉ«",
-    "07": "ºÚÉ«",
-    "08": "»ÒÉ«",
-    "09": "³ÈÉ«",
-    "10": "ÂÌÉ«",
-    "11": "À¶É«",
-    "12": "·ÛÉ«",
+    "00": "ï¿½ï¿½É«",
+    "01": "ï¿½ï¿½É«",
+    "02": "ï¿½ï¿½É«",
+    "03": "ï¿½ï¿½É«",
+    "04": "ï¿½ï¿½É«",
+    "05": "ï¿½ï¿½É«",
+    "06": "ï¿½ï¿½É«",
+    "07": "ï¿½ï¿½É«",
+    "08": "ï¿½ï¿½É«",
+    "09": "ï¿½ï¿½É«",
+    "10": "ï¿½ï¿½É«",
+    "11": "ï¿½ï¿½É«",
+    "12": "ï¿½ï¿½É«",
   };
 
   const metaById = window.SKIN_META || {};
@@ -24,76 +24,76 @@
   const tutorialImagesByWeapon = {
     K416: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/ÉÏ·½½Ì³Ì/Snipaste_2026-05-26_22-48-20.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/ï¿½Ï·ï¿½ï¿½Ì³ï¿½/Snipaste_2026-05-26_22-48-20.png",
         slot: "tutorial-main",
-        alt: "½Ì³ÌÊ¾ÒâÍ¼-Ö÷Í¼",
+        alt: "ï¿½Ì³ï¿½Ê¾ï¿½ï¿½Í¼-ï¿½ï¿½Í¼",
       },
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/ÉÏ·½½Ì³Ì/Snipaste_2026-05-26_22-48-48.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/ï¿½Ï·ï¿½ï¿½Ì³ï¿½/Snipaste_2026-05-26_22-48-48.png",
         slot: "tutorial-pitfall",
-        alt: "½Ì³ÌÊ¾ÒâÍ¼-¿Óµã",
+        alt: "ï¿½Ì³ï¿½Ê¾ï¿½ï¿½Í¼-ï¿½Óµï¿½",
       },
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/ÉÏ·½½Ì³Ì/Snipaste_2026-05-26_23-17-41.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/K416/ï¿½Ï·ï¿½ï¿½Ì³ï¿½/Snipaste_2026-05-26_23-17-41.png",
         slot: "tutorial-pitfall-extra",
-        alt: "½Ì³ÌÊ¾ÒâÍ¼-¿Óµã²¹³ä",
+        alt: "ï¿½Ì³ï¿½Ê¾ï¿½ï¿½Í¼-ï¿½Óµã²¹ï¿½ï¿½",
       },
     ],
     QBZ95: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/QBZ95/ÉÏ·½½Ì³Ì.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/QBZ95/ï¿½Ï·ï¿½ï¿½Ì³ï¿½.png",
         slot: "tutorial-main",
-        alt: "QBZ95 ½Ì³ÌÍ¼",
+        alt: "QBZ95 ï¿½Ì³ï¿½Í¼",
       },
     ],
     SCARH: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/SCARH/ÉÏ·½½Ì³Ì.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/SCARH/ï¿½Ï·ï¿½ï¿½Ì³ï¿½.png",
         slot: "tutorial-main",
-        alt: "SCARH ½Ì³ÌÍ¼",
+        alt: "SCARH ï¿½Ì³ï¿½Í¼",
       },
     ],
     Vector: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Vector/ÉÏ·½½Ì³ÌÍ¼Æ¬.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Vector/ï¿½Ï·ï¿½ï¿½Ì³ï¿½Í¼Æ¬.png",
         slot: "tutorial-main",
-        alt: "Vector ½Ì³ÌÍ¼",
+        alt: "Vector ï¿½Ì³ï¿½Í¼",
       },
     ],
     M4A1: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/M4A1/ÉÏ·½½Ì³Ì.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/M4A1/ï¿½Ï·ï¿½ï¿½Ì³ï¿½.png",
         slot: "tutorial-main",
-        alt: "M4A1 ½Ì³ÌÍ¼",
+        alt: "M4A1 ï¿½Ì³ï¿½Í¼",
       },
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/M4A1/ÉÏ·½½Ì³Ì2.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/M4A1/ï¿½Ï·ï¿½ï¿½Ì³ï¿½2.png",
         slot: "tutorial-pitfall",
-        alt: "M4A1 ½Ì³ÌÍ¼2",
+        alt: "M4A1 ï¿½Ì³ï¿½Í¼2",
       },
     ],
     KC17: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/KC17/ÉÏ·½½Ì³Ì/ÉÏ·½½Ì³Ì.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/KC17/ï¿½Ï·ï¿½ï¿½Ì³ï¿½/ï¿½Ï·ï¿½ï¿½Ì³ï¿½.png",
         slot: "tutorial-main",
-        alt: "KC17 ½Ì³ÌÍ¼",
+        alt: "KC17 ï¿½Ì³ï¿½Í¼",
       },
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/KC17/ÉÏ·½½Ì³Ì/ÉÏ·½½Ì³Ì2.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/KC17/ï¿½Ï·ï¿½ï¿½Ì³ï¿½/ï¿½Ï·ï¿½ï¿½Ì³ï¿½2.png",
         slot: "tutorial-pitfall",
-        alt: "KC17 ½Ì³ÌÍ¼2",
+        alt: "KC17 ï¿½Ì³ï¿½Í¼2",
       },
     ],
-    ÌÚÁú: [
+    ï¿½ï¿½ï¿½ï¿½: [
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ÌÚÁú/ÉÏ·½½Ì³Ì.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ï¿½ï¿½ï¿½ï¿½/ï¿½Ï·ï¿½ï¿½Ì³ï¿½.png",
         slot: "tutorial-main",
-        alt: "ÌÚÁú ½Ì³ÌÍ¼",
+        alt: "ï¿½ï¿½ï¿½ï¿½ ï¿½Ì³ï¿½Í¼",
       },
       {
-        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ÌÚÁú/ÉÏ·½½Ì³Ì2.png",
+        src: "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/ï¿½ï¿½ï¿½ï¿½/ï¿½Ï·ï¿½ï¿½Ì³ï¿½2.png",
         slot: "tutorial-pitfall",
-        alt: "ÌÚÁú ½Ì³ÌÍ¼2",
+        alt: "ï¿½ï¿½ï¿½ï¿½ ï¿½Ì³ï¿½Í¼2",
       },
     ],
   };
@@ -159,11 +159,11 @@
     const c1 = colorCode.slice(0, 2);
     const c2 = colorCode.slice(2, 4);
 
-    let colorLabel = colorCode ? "Î´ÖªÅäÉ«" : "";
+    let colorLabel = colorCode ? "Î´Öªï¿½ï¿½É«" : "";
     if (!colorCode) {
       colorLabel = "";
     } else if (colorCode === "1111") {
-      colorLabel = "Î´ÖªÅäÉ«";
+      colorLabel = "Î´Öªï¿½ï¿½É«";
     } else {
       const color1 = colorMap[c1] || c1;
       const color2 = colorMap[c2] || c2;
@@ -177,10 +177,10 @@
       name:
         (meta.name && String(meta.name).trim()) ||
         (item.template && String(item.template).trim()) ||
-        "Î´ÃüÃû",
+        "Î´ï¿½ï¿½ï¿½ï¿½",
       rating: meta.rating || "",
       comment: meta.comment || "",
-      qualityLabel: normalizeLabel(item.qualityLabel, qualityMap[qualityCode] || "Î´±ê×¢"),
+      qualityLabel: normalizeLabel(item.qualityLabel, qualityMap[qualityCode] || "Î´ï¿½ï¿½×¢"),
       materialLabel: normalizeLabel(item.materialLabel, decodeMaterialLabel(materialCode)),
       colorLabel: normalizeLabel(item.colorLabel, colorLabel),
     };
@@ -219,7 +219,7 @@
   }
 
   function renderList() {
-    pageTitle.textContent = state.nav === "home" ? "Ê×Ò³" : state.nav;
+    pageTitle.textContent = state.nav === "home" ? "ï¿½ï¿½Ò³" : state.nav;
     detailView.classList.add("hidden");
     homeGuide.classList.add("hidden");
     homeView.classList.add("hidden");
@@ -301,12 +301,12 @@
 
     const metaList = document.getElementById("metaList");
     metaList.innerHTML = `
-      <li><strong>ÎäÆ÷£º</strong>${escapeHtml(s.weapon)}</li>
-      <li><strong>Æ·ÖÊ£º</strong>${escapeHtml(s.qualityLabel)}</li>
-      ${s.materialLabel ? `<li><strong>²ÄÖÊ£º</strong>${escapeHtml(s.materialLabel)}</li>` : ""}
-      ${s.colorLabel ? `<li><strong>ÅäÉ«£º</strong>${escapeHtml(s.colorLabel)}</li>` : ""}
-      ${s.rating ? `<li><strong>ÆÀ·Ö£º</strong>${escapeHtml(s.rating)}</li>` : ""}
-      ${s.comment ? `<li><strong>¼òÆÀ£º</strong>${escapeHtml(s.comment)}</li>` : ""}
+      <li><strong>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½</strong>${escapeHtml(s.weapon)}</li>
+      <li><strong>Æ·ï¿½Ê£ï¿½</strong>${escapeHtml(s.qualityLabel)}</li>
+      ${s.materialLabel ? `<li><strong>ï¿½ï¿½ï¿½Ê£ï¿½</strong>${escapeHtml(s.materialLabel)}</li>` : ""}
+      ${s.colorLabel ? `<li><strong>ï¿½ï¿½É«ï¿½ï¿½</strong>${escapeHtml(s.colorLabel)}</li>` : ""}
+      ${s.rating ? `<li><strong>ï¿½ï¿½ï¿½Ö£ï¿½</strong>${escapeHtml(s.rating)}</li>` : ""}
+      ${s.comment ? `<li><strong>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½</strong>${escapeHtml(s.comment)}</li>` : ""}
     `;
 
     if (window.Comments) window.Comments.load(s.id);
@@ -358,10 +358,10 @@
       .map(
         (c) => `
       <article class="card weapon-card ${c.enabled ? "enabled" : "disabled"}" data-weapon="${escapeHtml(c.weapon)}">
-        <img src="${encodeURI(c.src)}" alt="${escapeHtml(c.title)} ×Ü·âÃæ" />
+        <img src="${encodeURI(c.src)}" alt="${escapeHtml(c.title)} ï¿½Ü·ï¿½ï¿½ï¿½" />
         <div class="card-body">
           <div class="card-id">${escapeHtml(c.title)}</div>
-          <div class="card-name">${c.enabled ? "½øÈëÍ¼¼ø" : "½¨ÉèÖÐ"}</div>
+          <div class="card-name">${c.enabled ? "ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½" : "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"}</div>
         </div>
       </article>
     `
@@ -386,7 +386,7 @@
 
   function renderTags(skin) {
     return [skin.qualityLabel, skin.materialLabel, skin.colorLabel]
-      .filter((tag) => tag && tag !== "Î´±ê×¢")
+      .filter((tag) => tag && tag !== "Î´ï¿½ï¿½×¢")
       .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`)
       .join("");
   }
@@ -397,7 +397,7 @@
     const weapons = [...new Set([...coverWeapons, ...dataWeapons])];
 
     sideNav.innerHTML = [
-      '<button class="nav-btn active" data-nav="home">Ê×Ò³</button>',
+      '<button class="nav-btn active" data-nav="home">ï¿½ï¿½Ò³</button>',
       ...weapons.map((weapon) => `<button class="nav-btn" data-nav="${escapeHtml(weapon)}">${escapeHtml(weapon)}</button>`),
     ].join("");
 
@@ -411,7 +411,7 @@
     });
   }
 
-  // ©¤©¤ ±¾µØ¿ª·¢¹¤¾ß£ºÐ£Ñé²¢¸üÐÂ ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤
+  // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß£ï¿½Ð£ï¿½é²¢ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   const DEV_API = "http://localhost:8765";
 
   const devTools = document.getElementById("devTools");
@@ -433,7 +433,7 @@
         populateWeaponSelect();
       }
     } catch {
-      // ¾²Ä¬£º·Ç±¾µØ¿ª·¢»·¾³²»ÏÔÊ¾¹¤¾ßÀ¸
+      // ï¿½ï¿½Ä¬ï¿½ï¿½ï¿½Ç±ï¿½ï¿½Ø¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     }
   }
 
@@ -457,10 +457,10 @@
 
   function renderValidateResult(data) {
     if (data.ok) {
-      validatePanelTitle.textContent = "Ð£ÑéÍ¨¹ý ?";
+      validatePanelTitle.textContent = "Ð£ï¿½ï¿½Í¨ï¿½ï¿½ ?";
       validatePanelTitle.className = "validate-title-ok";
     } else {
-      validatePanelTitle.textContent = "Ð£ÑéÊ§°Ü ?";
+      validatePanelTitle.textContent = "Ð£ï¿½ï¿½Ê§ï¿½ï¿½ ?";
       validatePanelTitle.className = "validate-title-err";
     }
 
@@ -478,7 +478,7 @@
       ${
         warnings.length
           ? `<div class="validate-warnings">
-              <div class="validate-warn-head">? ¸æ¾¯£¨${warnings.length} Ìõ£©</div>
+              <div class="validate-warn-head">? ï¿½æ¾¯ï¿½ï¿½${warnings.length} ï¿½ï¿½ï¿½ï¿½</div>
               ${warnings.map((w) => `<div class="validate-warn-line">${escapeHtml(w)}</div>`).join("")}
             </div>`
           : ""
@@ -486,13 +486,13 @@
       ${
         !data.ok && data.stderr
           ? `<div class="validate-errors">
-              <div class="validate-error-head">´íÎóÏêÇé</div>
+              <div class="validate-error-head">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½</div>
               <pre class="validate-pre">${escapeHtml(data.stderr)}</pre>
             </div>`
           : ""
       }
       <div class="validate-reload-hint">
-        ${data.ok ? "Êý¾ÝÒÑ¸üÐÂ£¬<button class='validate-reload-btn' onclick='location.reload()'>Ë¢ÐÂÒ³Ãæ</button> ÉúÐ§" : "Î´Ð´Èë site£¬ÎÞÐèË¢ÐÂ"}
+        ${data.ok ? "ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¸ï¿½ï¿½Â£ï¿½<button class='validate-reload-btn' onclick='location.reload()'>Ë¢ï¿½ï¿½Ò³ï¿½ï¿½</button> ï¿½ï¿½Ð§" : "Î´Ð´ï¿½ï¿½ siteï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¢ï¿½ï¿½"}
       </div>
     `;
   }
@@ -503,7 +503,7 @@
       const normalize = validateNormalize.checked;
 
       openValidatePanel();
-      validatePanelTitle.textContent = "Ð£ÑéÖÐ¡­";
+      validatePanelTitle.textContent = "Ð£ï¿½ï¿½ï¿½Ð¡ï¿½";
       validatePanelTitle.className = "";
       validatePanelBody.innerHTML = '<div class="validate-spinner"></div>';
       validateBtn.disabled = true;
@@ -517,7 +517,7 @@
         const data = await res.json();
         renderValidateResult(data);
       } catch (err) {
-        validatePanelTitle.textContent = "ÇëÇóÊ§°Ü";
+        validatePanelTitle.textContent = "ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½";
         validatePanelTitle.className = "validate-title-err";
         validatePanelBody.innerHTML = `<div class="validate-line">${escapeHtml(String(err))}</div>`;
       } finally {

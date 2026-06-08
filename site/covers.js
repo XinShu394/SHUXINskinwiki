@@ -1,74 +1,74 @@
 window.WEAPON_COVERS = [
   {
     "weapon": "ASVAL",
-    "title": "ASVAL-ÐüÉÍÁî",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤×Ü·âÃæ/ASVAL-ÐüÉÍÁî.png",
+    "title": "ASVAL-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤ï¿½Ü·ï¿½ï¿½ï¿½/ASVAL-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.png",
     "enabled": true
   },
   {
     "weapon": "AUG",
-    "title": "AUG-ÆøÏó¸ÐÓ¦",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤×Ü·âÃæ/AUG-ÆøÏó¸ÐÓ¦.png",
+    "title": "AUG-ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤ï¿½Ü·ï¿½ï¿½ï¿½/AUG-ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦.png",
     "enabled": true
   },
   {
     "weapon": "K416",
-    "title": "K416-ÃüÔËÍõÅÆ",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤×Ü·âÃæ/K416-ÃüÔËÍõÅÆ.png",
+    "title": "K416-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤ï¿½Ü·ï¿½ï¿½ï¿½/K416-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.png",
     "enabled": true
   },
   {
     "weapon": "KC17",
-    "title": "KC17-ÔìÎï¼ÍÔª",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤×Ü·âÃæ/KC17-ÔìÎï¼ÍÔª.png",
+    "title": "KC17-ï¿½ï¿½ï¿½ï¿½ï¿½Ôª",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤ï¿½Ü·ï¿½ï¿½ï¿½/KC17-ï¿½ï¿½ï¿½ï¿½ï¿½Ôª.png",
     "enabled": true
   },
   {
     "weapon": "M250",
-    "title": "M250-µçÍæ¸ßÊÖS2",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤×Ü·âÃæ/M250-µçÍæ¸ßÊÖS2.png",
+    "title": "M250-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½S2",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤ï¿½Ü·ï¿½ï¿½ï¿½/M250-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½S2.png",
     "enabled": false
   },
   {
     "weapon": "M4A1",
-    "title": "M4A1-Àâ¾µ¹¥ÊÆ",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤×Ü·âÃæ/M4A1-Àâ¾µ¹¥ÊÆ.png",
+    "title": "M4A1-ï¿½â¾µï¿½ï¿½ï¿½ï¿½",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤ï¿½Ü·ï¿½ï¿½ï¿½/M4A1-ï¿½â¾µï¿½ï¿½ï¿½ï¿½.png",
     "enabled": true
   },
   {
     "weapon": "M7",
-    "title": "M7-Àâ¾µ¹¥ÊÆS2",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤×Ü·âÃæ/M7-Àâ¾µ¹¥ÊÆS2.png",
+    "title": "M7-ï¿½â¾µï¿½ï¿½ï¿½ï¿½S2",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤ï¿½Ü·ï¿½ï¿½ï¿½/M7-ï¿½â¾µï¿½ï¿½ï¿½ï¿½S2.png",
     "enabled": false
   },
   {
     "weapon": "MP7",
-    "title": "MP7-µçÍæ¸ßÊÖS2",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤×Ü·âÃæ/MP7-µçÍæ¸ßÊÖS2.png",
+    "title": "MP7-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½S2",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤ï¿½Ü·ï¿½ï¿½ï¿½/MP7-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½S2.png",
     "enabled": false
   },
   {
     "weapon": "QBZ95",
-    "title": "QBZ95-1-ÍõÅÆÖ®½£",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤×Ü·âÃæ/QBZ95-1-ÍõÅÆÖ®½£.png",
+    "title": "QBZ95-1-ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤ï¿½Ü·ï¿½ï¿½ï¿½/QBZ95-1-ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½.png",
     "enabled": true
   },
   {
     "weapon": "SCARH",
-    "title": "SCARH-µçÍæ¸ßÊÖ",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤×Ü·âÃæ/SCARH-µçÍæ¸ßÊÖ.png",
+    "title": "SCARH-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤ï¿½Ü·ï¿½ï¿½ï¿½/SCARH-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.png",
     "enabled": true
   },
   {
     "weapon": "Vector",
-    "title": "Vector-ÃÀ¶ÅÉ¯",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤×Ü·âÃæ/Vector-ÃÀ¶ÅÉ¯.png",
+    "title": "Vector-ï¿½ï¿½ï¿½ï¿½É¯",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤ï¿½Ü·ï¿½ï¿½ï¿½/Vector-ï¿½ï¿½ï¿½ï¿½É¯.png",
     "enabled": true
   },
   {
-    "weapon": "ÌÚÁú",
-    "title": "ÌÚÁú-ÆøÏó¸ÐÓ¦",
-    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤×Ü·âÃæ/ÌÚÁú-ÆøÏó¸ÐÓ¦.png",
+    "weapon": "ï¿½ï¿½ï¿½ï¿½",
+    "title": "ï¿½ï¿½ï¿½ï¿½-ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/Ç¹Æ¤ï¿½Ü·ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½-ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦.png",
     "enabled": true
   }
 ];
