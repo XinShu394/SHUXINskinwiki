@@ -98,6 +98,16 @@ def clean(s, maxlen: int) -> str:
 def get_ip() -> str:
     return (request.headers.get("X-Forwarded-For", request.remote_addr) or "").split(",")[0].strip()
 
+def valid_folder_code(folder_code: str) -> bool:
+    # 防止路径穿越/跨目录写入，仅允许单级文件夹名。
+    if not folder_code:
+        return False
+    if ".." in folder_code:
+        return False
+    if "/" in folder_code or "\\" in folder_code:
+        return False
+    return True
+
 def check_token() -> bool:
     if not ADMIN_TOKEN:
         return False
@@ -326,6 +336,8 @@ def approve_submission(sub_id: int):
     folder_code = clean(data.get("folderCode", ""), 80)
     if not folder_code:
         return jsonify({"error": "folderCode 不能为空"}), 400
+    if not valid_folder_code(folder_code):
+        return jsonify({"error": "folderCode 非法（禁止包含路径分隔符或 ..）"}), 400
 
     conn = get_db()
     row = conn.execute("SELECT * FROM submissions WHERE id=?", (sub_id,)).fetchone()
@@ -369,7 +381,7 @@ def approve_submission(sub_id: int):
         ak          = os.environ.get("OSS_ACCESS_KEY_ID", "")
         sk          = os.environ.get("OSS_ACCESS_KEY_SECRET", "")
         bucket_name = os.environ.get("OSS_BUCKET", "skinwiki")
-        endpoint    = os.environ.get("OSS_ENDPOINT", "https://oss-cn-hangzhou.aliyuncs.com")
+        endpoint    = os.environ.get("OSS_ENDPOINT", "https://oss-cn-guangzhou.aliyuncs.com")
         if ak and sk:
             bucket = oss2.Bucket(oss2.Auth(ak, sk), endpoint, bucket_name)
             for f in target_dir.iterdir():
@@ -383,6 +395,16 @@ def approve_submission(sub_id: int):
         oss_log = "oss2 未安装，跳过 OSS 上传"
     except Exception as e:
         oss_log = f"OSS 上传失败：{e}"
+
+    if not build_ok:
+        return jsonify({
+            "ok": False,
+            "error": "构建失败，投稿未通过审核",
+            "buildOk": build_ok,
+            "buildLog": build_log,
+            "ossOk": oss_ok,
+            "ossLog": oss_log,
+        }), 500
 
     now = int(time.time() * 1000)
     conn = get_db()

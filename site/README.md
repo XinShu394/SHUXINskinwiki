@@ -1,20 +1,22 @@
-# K416 图鉴网站 MVP
+# 砖皮百科站点说明
 
-## 预览方式
+## 本地预览
 
-- 直接双击打开 `index.html`。
-- 或在项目根目录启动本地静态服务后访问 `site/index.html`。
+- 在项目根目录运行 `启动.bat`
+- 访问 `http://localhost:8765/site/index.html`
 
-## 当前功能
+## 当前主流程（已统一）
 
-- 左侧导航：首页 / K416
-- 首页卡片：展示 A 图、编号、品质/材质/颜色标签
-- 详情页：展示 B/C/D 图、分类信息、讨论看板占位
+- 皮肤截图放在武器目录（如 `K416/`、`MP7/`、`M250/`）
+- 运行 `python scripts/validate_and_build.py --weapon <武器名>` 更新站点数据
+- 生成结果直接写入：`site/data.js`、`site/meta.js`、`site/covers.js`
 
-## 数据来源
+## 投稿审核相关
 
-- `../K416/k416_index_step1.csv`（已转换为 `data.js`）
+- 用户投稿 API：`/api/submit`
+- 审核通过 API：`/api/submissions/<id>/approve`
+- 审核通过后会把图片落到武器目录并触发构建
 
-## 更新数据
+## 维护目标
 
-- 如果后续新增皮肤，请重新生成 `data.js`（可复用当前脚本流程）。
+- 当前优先完善：`MP7`、`M7`、`M250`
