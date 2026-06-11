@@ -38,6 +38,11 @@
       "defaultMaterial": "Q"
     },
     {
+      "weapon": "M7",
+      "dir": "M7",
+      "mode": "material_color"
+    },
+    {
       "weapon": "SCARH",
       "dir": "SCARH",
       "mode": "pure_template"

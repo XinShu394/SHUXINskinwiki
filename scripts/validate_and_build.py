@@ -289,6 +289,57 @@ def parse_tenglong_chinese_folder(name: str) -> tuple[str, str]:
     return f"{quality}{first_material}{color_code}", serial
 
 
+def parse_material_color_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
+    base_name, annotation = split_folder_name(folder_name)
+    normalized_code, serial = parse_material_color_core(base_name)
+    skin_id = f"{rule.weapon}-{normalized_code}-{serial}"
+    quality = normalized_code[0]
+    material = normalized_code[1:-4]
+    color_code = normalized_code[-4:]
+    canonical_folder = normalized_code if serial == "001" else f"{normalized_code}{serial}"
+    return ParseResult(
+        skin_id=skin_id,
+        folder_code=folder_name,
+        normalized_code=normalized_code,
+        weapon=rule.weapon,
+        serial=serial,
+        template="",
+        quality_label=QUALITY_LABEL.get(quality, ""),
+        material_label=decode_material(material),
+        color_label=decode_color_code(color_code),
+        canonical_folder_code=canonical_folder,
+        name_hint=annotation.get("skinName", ""),
+    )
+
+
+def parse_material_color_core(name: str) -> tuple[str, str]:
+    serial_match = re.search(r"(\d{3})$", name)
+    serial = serial_match.group(1) if serial_match else "001"
+    core = name[:-3] if serial_match else name
+    if len(core) < 2:
+        raise ValueError(f"目录不符合材质配色模式: {name}")
+    quality = core[0]
+    if quality not in QUALITY_LABEL:
+        raise ValueError(f"品级不合法: {name}")
+    pos = 1
+    materials: list[str] = []
+    while pos < len(core) and core[pos] in MATERIAL_LABEL and len(materials) < 2:
+        materials.append(core[pos])
+        pos += 1
+    if not materials:
+        raise ValueError(f"材质不合法: {name}")
+    color_text = core[pos:]
+    if not color_text:
+        color_code = "1111"
+    elif len(color_text) == 1 and color_text in COLOR_MAP:
+        color_code = COLOR_MAP[color_text] + "00"
+    elif len(color_text) == 2 and color_text[0] in COLOR_MAP and color_text[1] in COLOR_MAP:
+        color_code = COLOR_MAP[color_text[0]] + COLOR_MAP[color_text[1]]
+    else:
+        raise ValueError(f"颜色无法解析: {name!r}")
+    return f"{quality}{''.join(materials)}{color_code}", serial
+
+
 def parse_template_with_material_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
     base_name, annotation = split_folder_name(folder_name)
     # 优先尝试带材质码格式：[UJ][材质码{1,2}][模板名][可选流水]
@@ -476,6 +527,8 @@ def parse_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
         return parse_qbz95_folder(rule, folder_name)
     if rule.mode == "tenglong":
         return parse_tenglong_folder(rule, folder_name)
+    if rule.mode == "material_color":
+        return parse_material_color_folder(rule, folder_name)
     if rule.mode == "template_with_material":
         return parse_template_with_material_folder(rule, folder_name)
     if rule.mode == "pure_template":
