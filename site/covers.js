@@ -27,7 +27,7 @@ window.WEAPON_COVERS = [
     "weapon": "M250",
     "title": "M250-电玩高手S2",
     "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/M250-电玩高手S2.png",
-    "enabled": false
+    "enabled": true
   },
   {
     "weapon": "M4A1",
@@ -45,7 +45,7 @@ window.WEAPON_COVERS = [
     "weapon": "MP7",
     "title": "MP7-电玩高手S2",
     "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/MP7-电玩高手S2.png",
-    "enabled": false
+    "enabled": true
   },
   {
     "weapon": "QBZ95",

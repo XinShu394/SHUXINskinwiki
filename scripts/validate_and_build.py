@@ -587,7 +587,34 @@ def build_record(result: ParseResult) -> dict[str, Any]:
 
 
 def parse_existing_data_js(path: Path) -> list[dict[str, Any]]:
+    """读取已有皮肤数据。优先从 site/data/ 子文件合并，子目录不存在时回退到旧版单文件。"""
+    data_dir = path.parent / "data"
+    if data_dir.is_dir():
+        combined: list[dict[str, Any]] = []
+        for js_file in sorted(data_dir.glob("*.js")):
+            combined.extend(_read_weapon_data_js(js_file))
+        return combined
+    # 兼容旧版单文件格式
     return _read_wrapped_json_array(path, "window.SKIN_DATA =")
+
+
+def _read_weapon_data_js(path: Path) -> list[dict[str, Any]]:
+    """解析 site/data/{weapon}.js，格式为 window._SKIN_DATA_{weapon} = [...]。"""
+    text = path.read_text(encoding="utf-8").strip()
+    start = text.find("[")
+    end = text.rfind("]")
+    if start == -1 or end == -1:
+        return []
+    return json.loads(text[start : end + 1])
+
+
+def _write_weapon_data_js_atomically(data_dir: Path, weapon: str, records: list[dict[str, Any]]) -> None:
+    """将单武器记录写入 site/data/{weapon}.js。"""
+    data_dir.mkdir(parents=True, exist_ok=True)
+    var_name = f"window._SKIN_DATA_{weapon}"
+    dumped = json.dumps(records, ensure_ascii=False, indent=2)
+    content = f"{var_name} = {dumped};\n"
+    _atomic_write(data_dir / f"{weapon}.js", content)
 
 
 def duplicate_priority(parsed: ParseResult) -> int:
@@ -768,7 +795,13 @@ def main() -> int:
         covers.append(new_cover)
 
     if not args.dry_run:
-        _write_js_array_atomically(SITE_DIR / "data.js", "window.SKIN_DATA = ", records)
+        # 按武器分组写入 site/data/{weapon}.js，data.js 本身是静态索引不重写
+        data_dir = SITE_DIR / "data"
+        records_by_weapon: dict[str, list[dict[str, Any]]] = {}
+        for rec in records:
+            records_by_weapon.setdefault(rec["weapon"], []).append(rec)
+        for weapon, weapon_records in records_by_weapon.items():
+            _write_weapon_data_js_atomically(data_dir, weapon, weapon_records)
         _write_meta_js_atomically(SITE_DIR / "meta.js", merged_meta)
         _write_js_array_atomically(SITE_DIR / "covers.js", "window.WEAPON_COVERS = ", covers)
 
