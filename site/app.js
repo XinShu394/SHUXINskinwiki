@@ -1,4 +1,8 @@
 (function () {
+  function safeEncodeURI(url) {
+    return encodeURI(url).replace(/\+/g, "%2B");
+  }
+
   const qualityMap = { U: "优品", J: "极品" };
   const materialMap = { T: "透光", G: "贵金属", Q: "其他", L: "镭射", M: "漆面", Z: "木质" };
   const colorMap = {
@@ -261,7 +265,7 @@
       .map(
         (s) => `
       <article class="card" data-id="${escapeHtml(s.id)}">
-        <img src="${encodeURI(s.imageA)}" alt="${escapeHtml(s.id)} A图" />
+        <img src="${safeEncodeURI(s.imageA)}" alt="${escapeHtml(s.id)} A图" />
         <div class="card-body">
           <div class="card-id">${escapeHtml(s.name)}</div>
           <div class="card-name">${escapeHtml(s.id)}</div>
@@ -292,9 +296,9 @@
 
     document.getElementById("detailName").textContent = s.name;
     document.getElementById("detailId").textContent = s.id;
-    document.getElementById("imgB").src = encodeURI(s.imageB);
-    document.getElementById("imgC").src = encodeURI(s.imageC);
-    document.getElementById("imgD").src = encodeURI(s.imageD);
+    document.getElementById("imgB").src = safeEncodeURI(s.imageB);
+    document.getElementById("imgC").src = safeEncodeURI(s.imageC);
+    document.getElementById("imgD").src = safeEncodeURI(s.imageD);
     bindPreview("imgB", s.imageB);
     bindPreview("imgC", s.imageC);
     bindPreview("imgD", s.imageD);
@@ -327,7 +331,7 @@
   }
 
   function openLightbox(src) {
-    lightboxImage.src = encodeURI(src);
+    lightboxImage.src = safeEncodeURI(src);
     lightbox.classList.remove("hidden");
   }
 
@@ -341,7 +345,7 @@
       .map(
         (item) => `
       <figure class="tutorial-card ${item.slot}">
-        <img src="${encodeURI(item.src)}" alt="${escapeHtml(item.alt)}" />
+        <img src="${safeEncodeURI(item.src)}" alt="${escapeHtml(item.alt)}" />
       </figure>
     `
       )
@@ -358,7 +362,7 @@
       .map(
         (c) => `
       <article class="card weapon-card ${c.enabled ? "enabled" : "disabled"}" data-weapon="${escapeHtml(c.weapon)}">
-        <img src="${encodeURI(c.src)}" alt="${escapeHtml(c.title)} 总封面" />
+        <img src="${safeEncodeURI(c.src)}" alt="${escapeHtml(c.title)} 总封面" />
         <div class="card-body">
           <div class="card-id">${escapeHtml(c.title)}</div>
           <div class="card-name">${c.enabled ? "进入图鉴" : "建设中"}</div>
