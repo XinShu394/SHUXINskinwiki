@@ -76,6 +76,61 @@
            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  function parseApiResponse(r) {
+    var reqId = r.headers.get('X-Request-Id') || '';
+    var ct = (r.headers.get('content-type') || '').toLowerCase();
+    if (ct.indexOf('application/json') !== -1) {
+      return r.json().catch(function () { return {}; }).then(function (d) {
+        return { ok: r.ok, status: r.status, data: d, requestId: reqId };
+      });
+    }
+    return r.text().then(function (t) {
+      return { ok: r.ok, status: r.status, data: { error: (t || '').slice(0, 120) }, requestId: reqId };
+    });
+  }
+
+  function formatApiError(res, fallback) {
+    var msg = (res && res.data && res.data.error) || fallback;
+    if (res && res.status === 413) {
+      msg = '上传体积过大，请压缩后重试（单图≤5MB，总请求≤30MB）';
+    }
+    if (res && res.requestId) msg += '（请求ID:' + res.requestId + '）';
+    return msg;
+  }
+
+  function inferExt(file) {
+    if (!file) return '.png';
+    if (/jpe?g$/i.test(file.type) || /\.jpe?g$/i.test(file.name || '')) return '.jpg';
+    return '.png';
+  }
+
+  function loadOssSdk() {
+    if (global.OSS) return Promise.resolve(global.OSS);
+    if (global.__zpbkOssLoading) return global.__zpbkOssLoading;
+    global.__zpbkOssLoading = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'https://gosspublic.alicdn.com/aliyun-oss-sdk-6.18.0.min.js';
+      s.async = true;
+      s.onload = function () {
+        if (global.OSS) resolve(global.OSS);
+        else reject(new Error('OSS SDK 加载失败'));
+      };
+      s.onerror = function () { reject(new Error('OSS SDK 加载失败')); };
+      document.head.appendChild(s);
+    });
+    return global.__zpbkOssLoading;
+  }
+
+  function createOssClient(sts) {
+    return new global.OSS({
+      region: sts.region,
+      accessKeyId: sts.accessKeyId,
+      accessKeySecret: sts.accessKeySecret,
+      stsToken: sts.securityToken,
+      bucket: sts.bucket
+    });
+  }
+
   function enabledWeapons() {
     return (global.WEAPON_COVERS || []).filter(function (c) { return c.enabled; })
            .map(function (c) { return c.weapon; });
@@ -314,42 +369,91 @@
 
     if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '提交中…'; }
 
-    var fd = new FormData();
-    fd.append('weapon',      state.weapon);
-    fd.append('skinName',    state.skinName.trim());
-    fd.append('quality',     state.quality);
-    fd.append('material',    state.material);
-    fd.append('color1',      state.color1 || '');
-    fd.append('color2',      state.color2 || '');
-    fd.append('notes',       notes.trim());
-    fd.append('contributor', contributor.trim() || '匿名');
-    ['A', 'B', 'C', 'D'].forEach(function (s) {
-      if (state.files[s]) fd.append('file' + s, state.files[s].file);
-    });
+    var payload = {
+      weapon: state.weapon,
+      skinName: state.skinName.trim(),
+      quality: state.quality,
+      material: state.material,
+      color1: state.color1 || '',
+      color2: state.color2 || '',
+      notes: notes.trim(),
+      contributor: contributor.trim() || '匿名'
+    };
 
-    fetch(API_BASE + '/submit', { method: 'POST', body: fd })
-      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+    fetch(API_BASE + '/submissions/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(parseApiResponse)
       .then(function (res) {
         if (!res.ok) {
-          toast(res.d.error || '提交失败，请重试');
+          toast(formatApiError(res, '提交失败，请重试'));
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交投稿'; }
-          return;
+          return Promise.reject(new Error('create failed'));
         }
-        showSuccess(res.d.id);
+        return loadOssSdk().then(function () { return res.data; });
+      })
+      .then(function (createData) {
+        var sts = createData.sts || {};
+        if (!sts.accessKeyId || !sts.securityToken || !sts.keyPrefix) {
+          toast('上传凭证无效，请稍后重试');
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交投稿'; }
+          return Promise.reject(new Error('bad sts'));
+        }
+        var client = createOssClient(sts);
+        var uploads = {};
+        var chain = Promise.resolve();
+        ['A', 'B', 'C', 'D'].forEach(function (slot) {
+          if (!state.files[slot]) return;
+          chain = chain.then(function () {
+            var f = state.files[slot].file;
+            var ext = inferExt(f);
+            var key = sts.keyPrefix + slot + ext;
+            return client.multipartUpload(key, f, {
+              timeout: 120000,
+              mime: f.type || 'image/png'
+            }).then(function (ret) {
+              var etag = '';
+              if (ret && ret.res && ret.res.headers && ret.res.headers.etag) etag = String(ret.res.headers.etag).replace(/"/g, '');
+              uploads[slot] = { key: key, etag: etag, contentType: f.type || '' };
+            });
+          });
+        });
+        return chain.then(function () {
+          return fetch(API_BASE + '/submissions/commit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ submissionId: createData.id, uploads: uploads })
+          }).then(parseApiResponse).then(function (commitRes) {
+            if (!commitRes.ok) {
+              toast(formatApiError(commitRes, '提交失败，请重试'));
+              if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交投稿'; }
+              return;
+            }
+            showSuccess(createData.id, createData.queryToken || '');
+          });
+        });
       })
       .catch(function () {
-        toast('网络错误，请重试');
+        if (submitBtn && submitBtn.disabled) {
+          toast('上传失败，请重试（请检查网络与 OSS 跨域配置）');
+        }
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交投稿'; }
       });
   }
 
-  function showSuccess(id) {
+  function showSuccess(id, queryToken) {
     if (!panelEl) return;
+    var ticketHtml = queryToken
+      ? ('<div class="sp-success-ticket">查询票据：<strong>' + esc(queryToken) + '</strong><br>请截图保存，后续可查询审核状态。</div>')
+      : '';
     panelEl.innerHTML =
       '<div class="sp-inner sp-inner-success">' +
         '<div class="sp-success-icon">✓</div>' +
         '<div class="sp-success-title">投稿成功！</div>' +
         '<div class="sp-success-desc">编号 <strong>#' + id + '</strong>，审核通过后将在图鉴中展示。<br>感谢你的贡献！</div>' +
+        ticketHtml +
         '<button class="sp-btn-primary" id="spDone">关闭</button>' +
       '</div>';
     panelEl.querySelector('#spDone').addEventListener('click', closePanel);

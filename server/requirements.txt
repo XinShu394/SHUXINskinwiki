@@ -3,3 +3,5 @@ flask-cors>=4.0.0
 gunicorn>=21.0.0
 Pillow>=10.0.0
 oss2>=2.18.0
+aliyun-python-sdk-core>=2.13.36
+aliyun-python-sdk-sts>=3.1.1

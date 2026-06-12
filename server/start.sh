@@ -16,4 +16,5 @@ fi
 
 echo "[启动] 评论 API 服务..."
 # 使用 gunicorn 生产模式，4 个 worker，监听本地 5200 端口
-exec gunicorn -w 4 -b 127.0.0.1:5200 --timeout 30 --access-logfile - app:app
+# timeout 需要覆盖审核通过时构建脚本的最长执行时间（默认 120s）
+exec gunicorn -w 4 -b 127.0.0.1:5200 --timeout 180 --access-logfile - app:app

@@ -55,6 +55,28 @@
 
   function authHeaders() { return { 'Authorization': 'Bearer ' + token }; }
 
+  function parseApiResponse(r) {
+    var reqId = r.headers.get('X-Request-Id') || '';
+    var ct = (r.headers.get('content-type') || '').toLowerCase();
+    if (ct.indexOf('application/json') !== -1) {
+      return r.json().catch(function () { return {}; }).then(function (d) {
+        return { ok: r.ok, status: r.status, data: d, requestId: reqId };
+      });
+    }
+    return r.text().then(function (t) {
+      return { ok: r.ok, status: r.status, data: { error: (t || '').slice(0, 120) }, requestId: reqId };
+    });
+  }
+
+  function formatApiError(res, fallback) {
+    var msg = (res && res.data && res.data.error) || fallback;
+    if (res && res.status === 413) {
+      msg = '请求体过大，请缩小图片体积后重试';
+    }
+    if (res && res.requestId) msg += '（请求ID:' + res.requestId + '）';
+    return msg;
+  }
+
   function suggestFolder(sub) {
     var q = QUALITY_CODES[sub.quality] || '';
     var m = MATERIAL_CODES[sub.material] || '';
@@ -95,25 +117,29 @@
       var t = (input ? input.value : '').trim();
       if (!t) return;
       btn.disabled = true; btn.textContent = '验证中…';
-      fetch(API_BASE + '/submissions?status=pending', {
+      fetch(API_BASE + '/submissions?status=pending_review', {
         headers: { 'Authorization': 'Bearer ' + t }
       })
-        .then(function (r) {
-          if (r.status === 401) {
+        .then(parseApiResponse)
+        .then(function (res) {
+          if (res.status === 401) {
             errEl.classList.remove('hidden');
+            btn.disabled = false; btn.textContent = '进入审核';
+            return null;
+          }
+          if (!res.ok) {
+            errEl.classList.remove('hidden');
+            errEl.textContent = formatApiError(res, '验证失败，请重试');
             btn.disabled = false; btn.textContent = '进入审核';
             return null;
           }
           token = t;
           sessionStorage.setItem(SESSION_KEY, t);
-          return r.json();
-        })
-        .then(function (data) {
-          if (data) showList(data.results);
+          showList(res.data.results);
         })
         .catch(function () {
           errEl.classList.remove('hidden');
-          errEl.textContent = '网络错误，请重试';
+          errEl.textContent = '网络连接失败，请重试（请检查 /api 是否可用）';
           btn.disabled = false; btn.textContent = '进入审核';
         });
     }
@@ -152,14 +178,18 @@
   function loadList() {
     var body = panelEl && panelEl.querySelector('#rpBody');
     if (body) body.innerHTML = '<div class="rp-loading">加载中…</div>';
-    fetch(API_BASE + '/submissions?status=pending', { headers: authHeaders() })
-      .then(function (r) {
-        if (r.status === 401) { sessionStorage.removeItem(SESSION_KEY); showLogin(); return null; }
-        return r.json();
+    fetch(API_BASE + '/submissions?status=pending_review', { headers: authHeaders() })
+      .then(parseApiResponse)
+      .then(function (res) {
+        if (res.status === 401) { sessionStorage.removeItem(SESSION_KEY); showLogin(); return; }
+        if (!res.ok) {
+          if (body) body.innerHTML = '<div class="rp-empty">' + esc(formatApiError(res, '加载失败，请重试')) + '</div>';
+          return;
+        }
+        renderList(res.data.results);
       })
-      .then(function (data) { if (data) renderList(data.results); })
       .catch(function () {
-        if (body) body.innerHTML = '<div class="rp-empty">网络错误，请重试</div>';
+        if (body) body.innerHTML = '<div class="rp-empty">网络连接失败，请重试（请检查 /api 是否可用）</div>';
       });
   }
 
@@ -229,10 +259,21 @@
         var imgEl = body.querySelector('#rpImg' + sub.id + slot);
         if (!imgEl) return;
         fetch(API_BASE + '/uploads/' + sub.id + '/' + slot, { headers: authHeaders() })
-          .then(function (r) { return r.ok ? r.blob() : null; })
-          .then(function (blob) {
-            if (!blob) return;
-            var u = URL.createObjectURL(blob);
+          .then(function (r) {
+            var ct = (r.headers.get('content-type') || '').toLowerCase();
+            if (!r.ok) return null;
+            if (ct.indexOf('application/json') !== -1) {
+              return r.json().then(function (d) { return d && d.url ? { mode: 'url', val: d.url } : null; });
+            }
+            return r.blob().then(function (blob) { return { mode: 'blob', val: blob }; });
+          })
+          .then(function (ret) {
+            if (!ret) return;
+            if (ret.mode === 'url') {
+              if (imgEl) imgEl.src = ret.val;
+              return;
+            }
+            var u = URL.createObjectURL(ret.val);
             blobUrls.push(u);
             if (imgEl) imgEl.src = u;
           })
@@ -266,25 +307,25 @@
       headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
       body: JSON.stringify({ folderCode: folderCode })
     })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (!d.ok) {
+      .then(parseApiResponse)
+      .then(function (res) {
+        var d = res.data || {};
+        if (!res.ok || !d.ok) {
           btn.disabled = false; btn.textContent = '✓ 通过发布';
-          alert(d.error || '操作失败，请重试'); return;
+          alert(formatApiError(res, d.error || '操作失败，请重试')); return;
         }
         replaceCard(id,
           '<div class="rp-done rp-done-ok">' +
             '<span class="rp-done-icon">✓</span>' +
             '<span>已通过发布</span>' +
-            (d.ossLog ? '<span class="rp-done-note">' + esc(d.ossLog) + '</span>' : '') +
-            (!d.buildOk ? '<span class="rp-done-warn">构建脚本异常，请手动检查</span>' : '') +
+            (d.buildQueued ? '<span class="rp-done-note">构建任务已入队，后台处理中</span>' : '') +
           '</div>'
         );
         decCount();
       })
       .catch(function () {
         btn.disabled = false; btn.textContent = '✓ 通过发布';
-        alert('网络错误，请重试');
+        alert('网络连接失败，请重试（请检查 /api 是否可用）');
       });
   }
 
@@ -317,11 +358,12 @@
       headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
       body: JSON.stringify({ note: note })
     })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (!d.ok) {
+      .then(parseApiResponse)
+      .then(function (res) {
+        var d = res.data || {};
+        if (!res.ok || !d.ok) {
           if (btn) btn.disabled = false;
-          alert(d.error || '操作失败'); return;
+          alert(formatApiError(res, d.error || '操作失败')); return;
         }
         replaceCard(id,
           '<div class="rp-done rp-done-no">' +
@@ -334,7 +376,7 @@
       })
       .catch(function () {
         if (btn) btn.disabled = false;
-        alert('网络错误，请重试');
+        alert('网络连接失败，请重试（请检查 /api 是否可用）');
       });
   }
 

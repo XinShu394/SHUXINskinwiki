@@ -1,0 +1,14 @@
+[Unit]
+Description=砖皮百科 构建队列 Worker
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/zpbk/server
+ExecStart=/var/www/zpbk/server/venv/bin/python /var/www/zpbk/server/build_worker.py
+Restart=always
+RestartSec=5
+User=www-data
+
+[Install]
+WantedBy=multi-user.target
