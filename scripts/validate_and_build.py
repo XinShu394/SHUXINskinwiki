@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import re
 import tempfile
 from dataclasses import dataclass
@@ -39,6 +40,55 @@ IGNORED_FOLDER_NAMES = {
     "_raw_backup",
     "__pycache__",
 }
+
+
+# ── OSS 工具（仅 --source oss 时使用）──────────────────────
+def _get_oss_bucket():
+    import oss2  # type: ignore
+    ak = os.environ.get("OSS_ACCESS_KEY_ID", "")
+    sk = os.environ.get("OSS_ACCESS_KEY_SECRET", "")
+    endpoint = os.environ.get("OSS_ENDPOINT", "https://oss-cn-guangzhou.aliyuncs.com")
+    bucket_name = os.environ.get("OSS_BUCKET", "skinwiki")
+    auth = oss2.Auth(ak, sk)
+    return oss2.Bucket(auth, endpoint, bucket_name)
+
+
+def list_oss_virtual_folders(bucket, prefix: str) -> list[str]:
+    """返回 OSS prefix 下的虚拟子目录名列表（不含 prefix 和尾部 /）。"""
+    import oss2  # type: ignore
+    result = []
+    for obj in oss2.ObjectIterator(bucket, prefix=prefix, delimiter="/"):
+        if hasattr(obj, "key") and obj.key.endswith("/") and obj.key != prefix:
+            folder = obj.key[len(prefix):].rstrip("/")
+            if folder and not should_skip_folder(folder):
+                result.append(folder)
+    return sorted(result)
+
+
+def oss_image_exists(bucket, key: str) -> bool:
+    try:
+        bucket.head_object(key)
+        return True
+    except Exception:
+        return False
+
+
+def validate_required_images_oss(
+    bucket, weapon_dir: str, folder_code: str, skin_id: str,
+    errors: list[str], warnings: list[str],
+) -> None:
+    """校验 OSS 上的图片。
+    A 缺失 → error（阻断构建）；B/C/D 缺失 → warning（允许只有 1 张图的投稿通过）。
+    兼容 {skin_id}_{slot}.png 和 {slot}.png 两种命名。
+    """
+    for slot in ("A", "B", "C", "D"):
+        standard_key = f"{weapon_dir}/{folder_code}/{skin_id}_{slot}.png"
+        fallback_key = f"{weapon_dir}/{folder_code}/{slot}.png"
+        if not oss_image_exists(bucket, standard_key) and not oss_image_exists(bucket, fallback_key):
+            if slot == "A":
+                errors.append(f"OSS 缺少主图: {standard_key}")
+            else:
+                warnings.append(f"OSS 缺少副图（可选）: {standard_key}")
 
 
 @dataclass
@@ -520,6 +570,45 @@ def parse_asval_all_folders(rule: WeaponRule, weapon_dir: Path) -> dict[str, Par
     return result
 
 
+def parse_asval_all_folders_oss(bucket, rule: WeaponRule) -> dict[str, ParseResult]:
+    """OSS 版本的 ASVAL 两阶段串号：从 OSS 虚拟目录列举文件夹名，逻辑与本地版相同。"""
+    from collections import defaultdict
+
+    folder_names = list_oss_virtual_folders(bucket, rule.dir_name + "/")
+    groups: dict[str, list[tuple[str, str, str, str, str]]] = defaultdict(list)
+    errors_local: list[str] = []
+    for folder_name in folder_names:
+        try:
+            quality, material, color_code, color_label = parse_asval_folder_core(folder_name)
+            normalized_code = f"{quality}{material}{color_code}"
+            groups[normalized_code].append((folder_name, quality, material, color_code, color_label))
+        except Exception as exc:
+            errors_local.append(f"[{rule.weapon}] 解析失败 {folder_name}: {exc}")
+    if errors_local:
+        raise ValueError("\n".join(errors_local))
+
+    result: dict[str, ParseResult] = {}
+    for normalized_code, items in groups.items():
+        for idx, (folder_name, quality, material, color_code, color_label) in enumerate(items, start=1):
+            serial = f"{idx:03d}"
+            skin_id = f"{rule.weapon}-{normalized_code}-{serial}"
+            canonical_folder = normalized_code if serial == "001" else f"{normalized_code}{serial}"
+            result[folder_name] = ParseResult(
+                skin_id=skin_id,
+                folder_code=folder_name,
+                normalized_code=normalized_code,
+                weapon=rule.weapon,
+                serial=serial,
+                template="",
+                quality_label=QUALITY_LABEL.get(quality, ""),
+                material_label=decode_material(material),
+                color_label=color_label,
+                canonical_folder_code=canonical_folder,
+                name_hint="",
+            )
+    return result
+
+
 def parse_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
     if rule.mode == "k416":
         return parse_k416_folder(rule, folder_name)
@@ -664,6 +753,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="按规范重命名文件夹为 代码__材质-品级-枪皮名。",
     )
+    parser.add_argument(
+        "--source",
+        choices=["local", "oss"],
+        default="local",
+        help="图片来源：local（默认，读本地磁盘）或 oss（从 OSS 列目录+校验）。",
+    )
     return parser.parse_args()
 
 
@@ -676,6 +771,9 @@ def main() -> int:
         rules = [r for r in rules if r.weapon == args.weapon]
         if not rules:
             raise SystemExit(f"未在配置中找到武器: {args.weapon}")
+
+    use_oss = args.source == "oss"
+    oss_bucket = _get_oss_bucket() if use_oss else None
 
     existing_data = parse_existing_data_js(SITE_DIR / "data.js")
     existing_meta = parse_meta_js(SITE_DIR / "meta.js")
@@ -691,7 +789,7 @@ def main() -> int:
 
     for rule in rules:
         weapon_dir = ROOT / rule.dir_name
-        if not weapon_dir.exists():
+        if not use_oss and not weapon_dir.exists():
             errors.append(f"武器目录不存在: {weapon_dir}")
             continue
 
@@ -700,7 +798,10 @@ def main() -> int:
         # ASVAL 使用两阶段串号，单独处理
         if rule.mode == "asval":
             try:
-                asval_map = parse_asval_all_folders(rule, weapon_dir)
+                if use_oss:
+                    asval_map = parse_asval_all_folders_oss(oss_bucket, rule)
+                else:
+                    asval_map = parse_asval_all_folders(rule, weapon_dir)
             except Exception as exc:
                 errors.append(str(exc))
                 continue
@@ -710,14 +811,19 @@ def main() -> int:
                     continue
                 chosen_by_id[parsed.skin_id] = parsed
         else:
-            folders = sorted([p for p in weapon_dir.iterdir() if p.is_dir()], key=lambda p: p.name)
-            for folder in folders:
-                if should_skip_folder(folder.name):
+            if use_oss:
+                folder_names = list_oss_virtual_folders(oss_bucket, rule.dir_name + "/")
+            else:
+                folder_names = sorted(
+                    [p.name for p in weapon_dir.iterdir() if p.is_dir()],
+                )
+            for folder_name in folder_names:
+                if should_skip_folder(folder_name):
                     continue
                 try:
-                    parsed = parse_folder(rule, folder.name)
+                    parsed = parse_folder(rule, folder_name)
                 except Exception as exc:
-                    errors.append(f"[{rule.weapon}] 目录解析失败 {folder.name}: {exc}")
+                    errors.append(f"[{rule.weapon}] 目录解析失败 {folder_name}: {exc}")
                     continue
 
                 prev = chosen_by_id.get(parsed.skin_id)
@@ -730,20 +836,23 @@ def main() -> int:
                         )
                         chosen_by_id[parsed.skin_id] = parsed
                     else:
-                        warnings.append(f"[{rule.weapon}] ID 冲突已跳过目录: {parsed.skin_id} ({folder.name})")
+                        warnings.append(f"[{rule.weapon}] ID 冲突已跳过目录: {parsed.skin_id} ({folder_name})")
                     continue
                 chosen_by_id[parsed.skin_id] = parsed
 
         for parsed in sorted(
             [x for x in chosen_by_id.values() if x.weapon == rule.weapon], key=lambda x: x.skin_id
         ):
-            folder = weapon_dir / parsed.folder_code
-            validate_required_images(folder, parsed.skin_id, errors)
+            if use_oss:
+                validate_required_images_oss(oss_bucket, rule.dir_name, parsed.folder_code, parsed.skin_id, errors, warnings)
+            else:
+                folder = weapon_dir / parsed.folder_code
+                validate_required_images(folder, parsed.skin_id, errors)
             meta_row = choose_meta_for_id(
                 parsed.skin_id, parsed.template, existing_meta, overrides
             )
             skin_name = meta_row.get("name", "") or parsed.name_hint or parsed.template
-            if args.normalize_folders:
+            if not use_oss and args.normalize_folders:
                 desired_folder = build_standard_folder_name(parsed, skin_name)
                 if desired_folder != parsed.folder_code:
                     src = weapon_dir / parsed.folder_code
@@ -757,8 +866,8 @@ def main() -> int:
                         src.rename(dst)
                         warnings.append(f"[{rule.weapon}] 已重命名目录: {parsed.folder_code} -> {desired_folder}")
                         parsed.folder_code = desired_folder
-            folder = weapon_dir / parsed.folder_code
-            validate_required_images(folder, parsed.skin_id, errors)
+                folder = weapon_dir / parsed.folder_code
+                validate_required_images(folder, parsed.skin_id, errors)
             records.append(build_record(parsed))
             generated_meta[parsed.skin_id] = meta_row
             count_by_weapon[rule.weapon] += 1

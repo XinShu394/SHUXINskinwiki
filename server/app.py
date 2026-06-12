@@ -48,6 +48,25 @@ STS_SESSION_SECONDS = int(os.environ.get("ALIYUN_STS_DURATION_SECONDS", "600"))
 STS_AK_ID = os.environ.get("ALIYUN_STS_ACCESS_KEY_ID", "")
 STS_AK_SECRET = os.environ.get("ALIYUN_STS_ACCESS_KEY_SECRET", "")
 
+# ── parse 辅助（approve 时计算 skin_id，避免命名不一致）──────
+def _compute_skin_id(weapon: str, folder_code: str) -> str | None:
+    """从 weapon + folder_code 推导 skin_id。ASVAL 序号依赖全量目录，返回 None（用 slot.png 兜底）。"""
+    import sys as _sys
+    _scripts = str(ROOT / "scripts")
+    if _scripts not in _sys.path:
+        _sys.path.insert(0, _scripts)
+    try:
+        from validate_and_build import load_weapon_rules, parse_folder  # type: ignore
+        _config = ROOT / "scripts" / "config" / "weapon_rules.json"
+        rules = load_weapon_rules(_config)
+        rule = next((r for r in rules if r.weapon == weapon), None)
+        if not rule or rule.mode == "asval":
+            return None
+        return parse_folder(rule, folder_code).skin_id
+    except Exception:
+        return None
+
+
 # ── 频率限制 ──────────────────────────────────────────────
 _rate:        dict = {}   # 评论用：ip -> [ts, ...]
 _submit_rate: dict = {}   # 投稿用：ip -> [ts, ...]
@@ -675,6 +694,7 @@ def approve_submission(sub_id: int):
     if (row["storage_mode"] or "local") == "oss":
         try:
             bucket = get_oss_bucket()
+            skin_id = _compute_skin_id(weapon, folder_code)
             for slot in ("A", "B", "C", "D"):
                 src_key = row[slot_field(slot, "oss_key")]
                 if not src_key:
@@ -682,7 +702,8 @@ def approve_submission(sub_id: int):
                 ext = Path(src_key).suffix.lower()
                 if ext not in (".png", ".jpg", ".jpeg"):
                     ext = ".png"
-                dst_key = f"{weapon_dir}/{folder_code}/{slot}{ext}"
+                fname = f"{skin_id}_{slot}{ext}" if skin_id else f"{slot}{ext}"
+                dst_key = f"{weapon_dir}/{folder_code}/{fname}"
                 bucket.copy_object(OSS_BUCKET, src_key, dst_key)
         except Exception as e:
             conn.close()

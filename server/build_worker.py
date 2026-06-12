@@ -15,6 +15,7 @@ DB_PATH = Path(__file__).resolve().parent / "comments.db"
 ROOT = Path(__file__).resolve().parent.parent
 POLL_SECONDS = int(os.environ.get("ZPBK_BUILD_WORKER_POLL_SECONDS", "5"))
 BUILD_TIMEOUT_SECONDS = int(os.environ.get("ZPBK_BUILD_TIMEOUT_SECONDS", "300"))
+PYTHON = str(Path(__file__).resolve().parent / "venv" / "bin" / "python")
 
 
 def get_db() -> sqlite3.Connection:
@@ -69,8 +70,9 @@ def mark_submissions(weapon: str, build_status: str, build_error: str = ""):
 
 def run_build_for_weapon(weapon: str):
     script = ROOT / "scripts" / "validate_and_build.py"
+    source = "oss" if os.environ.get("UPLOAD_STORAGE_MODE") == "oss" else "local"
     r = subprocess.run(
-        ["python", str(script), "--weapon", weapon],
+        [PYTHON, str(script), "--weapon", weapon, "--source", source],
         capture_output=True,
         text=True,
         encoding="utf-8",
