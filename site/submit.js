@@ -261,6 +261,16 @@
     h += '<label class="sp-auth"><input type="checkbox" id="spAuth" />';
     h += ' 我确认图片为本人游戏内截图，授权用于本非盈利图鉴展示</label>';
 
+    // 上传进度（提交后显示）
+    h += '<div id="spProgress" class="sp-progress hidden">';
+    h += '<div class="sp-progress-header">';
+    h += '<span id="spProgressText">准备上传…</span>';
+    h += '<span id="spProgressPct">0%</span>';
+    h += '</div>';
+    h += '<div class="sp-progress-track"><div class="sp-progress-fill" id="spProgressFill"></div></div>';
+    h += '<div class="sp-progress-tip">⏱ 4 张图预计 1–2 分钟，请勿关闭页面</div>';
+    h += '</div>';
+
     h += '<div class="sp-footer">';
     h += '<button class="sp-btn-sec" id="spBack">← 返回</button>';
     h += '<button class="sp-btn-primary" id="spSubmit" disabled>提交投稿</button>';
@@ -428,9 +438,29 @@
         var ossSlots    = ['A', 'B', 'C', 'D'];
         var allNums     = ['1', '2', '3', '4'];
         var orderedNums = [state.coverSlot].concat(allNums.filter(function (x) { return x !== state.coverSlot; }));
+        var total       = orderedNums.length;
+        var uploadedCount = 0;
+
+        // 显示进度条
+        var progEl = panelEl && panelEl.querySelector('#spProgress');
+        if (progEl) progEl.classList.remove('hidden');
+
+        function setProgress(done, label) {
+          var pctNum = Math.round(done / total * 100);
+          var fill = panelEl && panelEl.querySelector('#spProgressFill');
+          var text = panelEl && panelEl.querySelector('#spProgressText');
+          var pct  = panelEl && panelEl.querySelector('#spProgressPct');
+          if (fill) fill.style.width = pctNum + '%';
+          if (text) text.textContent = label;
+          if (pct)  pct.textContent  = pctNum + '%';
+        }
+
+        setProgress(0, '准备上传…');
+
         orderedNums.forEach(function (numSlot, i) {
           var ossSlot = ossSlots[i];
           chain = chain.then(function () {
+            setProgress(uploadedCount, '上传第 ' + (uploadedCount + 1) + ' / ' + total + ' 张…');
             var f = state.files[numSlot].file;
             var ext = inferExt(f);
             var key = sts.keyPrefix + ossSlot + ext;
@@ -441,10 +471,15 @@
               var etag = '';
               if (ret && ret.res && ret.res.headers && ret.res.headers.etag) etag = String(ret.res.headers.etag).replace(/"/g, '');
               uploads[ossSlot] = { key: key, etag: etag, contentType: f.type || '' };
+              uploadedCount++;
+              setProgress(uploadedCount, uploadedCount < total
+                ? ('上传第 ' + (uploadedCount + 1) + ' / ' + total + ' 张…')
+                : '图片上传完毕，提交中…');
             });
           });
         });
         return chain.then(function () {
+          setProgress(total, '图片上传完毕，提交中…');
           return fetch(API_BASE + '/submissions/commit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
