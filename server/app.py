@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import random
+import re
 import shutil
 import sqlite3
 import time
@@ -771,10 +772,23 @@ def approve_submission(sub_id: int):
     weapon     = row["weapon"]
     weapon_dir = get_weapon_dir(weapon)
 
+    # 将投稿人填写的皮肤名编码进文件夹名（__ 注解格式），供构建脚本读取 name_hint
+    # 格式：{folderCode}__{material}-{quality}-{skinName}，仅当 skin_name 存在且 folderCode 不含 __ 时追加
+    sub_skin_name = (row["skin_name"] if "skin_name" in cols else "") or ""
+    sub_quality   = (row["quality"]   if "quality"   in cols else "") or ""
+    sub_material  = (row["material"]  if "material"  in cols else "") or ""
+    effective_folder_code = folder_code
+    if sub_skin_name and "__" not in folder_code:
+        safe_name = re.sub(r'[/\\|]', '_', sub_skin_name.strip())
+        if safe_name:
+            effective_folder_code = (
+                f"{folder_code}__{sub_material or 'NA'}-{sub_quality or 'NA'}-{safe_name}"
+            )
+
     if (row["storage_mode"] or "local") == "oss":
         try:
             bucket = get_oss_bucket()
-            skin_id = _compute_skin_id(weapon, folder_code)
+            skin_id = _compute_skin_id(weapon, effective_folder_code)
             for slot in ("A", "B", "C", "D"):
                 src_key = row[slot_field(slot, "oss_key")]
                 if not src_key:
@@ -783,7 +797,7 @@ def approve_submission(sub_id: int):
                 if ext not in (".png", ".jpg", ".jpeg"):
                     ext = ".png"
                 fname = f"{skin_id}_{slot}{ext}" if skin_id else f"{slot}{ext}"
-                dst_key = f"{weapon_dir}/{folder_code}/{fname}"
+                dst_key = f"{weapon_dir}/{effective_folder_code}/{fname}"
                 bucket.copy_object(OSS_BUCKET, src_key, dst_key)
         except Exception as e:
             conn.close()

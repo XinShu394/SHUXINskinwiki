@@ -728,6 +728,7 @@ def duplicate_priority(parsed: ParseResult) -> int:
 def choose_meta_for_id(
     skin_id: str,
     derived_template: str,
+    name_hint: str,
     existing_meta: dict[str, dict[str, str]],
     overrides: dict[str, dict[str, str]],
 ) -> dict[str, str]:
@@ -737,7 +738,8 @@ def choose_meta_for_id(
     if skin_id in existing_meta:
         row = existing_meta[skin_id]
         return {"name": row.get("name", ""), "rating": row.get("rating", ""), "comment": row.get("comment", "")}
-    return {"name": derived_template, "rating": "", "comment": ""}
+    # 新皮肤：优先用模板名，其次用文件夹注解中的 name_hint（用户投稿时填写的皮肤名）
+    return {"name": derived_template or name_hint, "rating": "", "comment": ""}
 
 
 def sanitize_folder_piece(value: str) -> str:
@@ -860,7 +862,7 @@ def main() -> int:
                 folder = weapon_dir / parsed.folder_code
                 validate_required_images(folder, parsed.skin_id, errors)
             meta_row = choose_meta_for_id(
-                parsed.skin_id, parsed.template, existing_meta, overrides
+                parsed.skin_id, parsed.template, parsed.name_hint, existing_meta, overrides
             )
             skin_name = meta_row.get("name", "") or parsed.name_hint or parsed.template
             if not use_oss and args.normalize_folders:
