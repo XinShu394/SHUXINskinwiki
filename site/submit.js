@@ -92,7 +92,7 @@
   function formatApiError(res, fallback) {
     var msg = (res && res.data && res.data.error) || fallback;
     if (res && res.status === 413) {
-      msg = '上传体积过大，请压缩后重试（单图≤5MB，总请求≤30MB）';
+      msg = '上传体积过大，请压缩后重试（单图≤20MB）';
     }
     if (res && res.requestId) msg += '（请求ID:' + res.requestId + '）';
     return msg;
@@ -222,7 +222,7 @@
     h += '<div class="sp-body">';
 
     // 图片上传区
-    h += '<div class="sp-section"><div class="sp-label">截图上传 <span class="sp-hint">至少 1 张 · PNG/JPG · 单张 ≤ 5MB</span></div>';
+    h += '<div class="sp-section"><div class="sp-label">截图上传 <span class="sp-hint">至少 1 张 · PNG/JPG · 单张 ≤ 20MB</span></div>';
     h += '<div class="sp-upload-grid">';
     ['A', 'B', 'C', 'D'].forEach(function (slot) {
       var info = SLOT_INFO[slot];
@@ -352,7 +352,7 @@
 
   function handleFile(slot, file) {
     if (!file.type.match(/^image\/(png|jpe?g)$/i)) { toast('仅支持 PNG / JPG 格式'); return; }
-    if (file.size > 5 * 1024 * 1024)               { toast('图片超过 5MB 限制'); return; }
+    if (file.size > 20 * 1024 * 1024)              { toast('图片超过 20MB 限制'); return; }
     if (state.files[slot] && state.files[slot].url) URL.revokeObjectURL(state.files[slot].url);
     state.files[slot] = { file: file, name: file.name, url: URL.createObjectURL(file) };
     render(2);

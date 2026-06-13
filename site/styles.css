@@ -1553,4 +1553,130 @@ body {
 .rp-done-note { font-size: 11px; color: #5a9080; margin-left: auto; }
 .rp-done-warn { font-size: 11px; color: #e8b870; }
 
+/* ── 审核面板：补充图徽章 ────────────────────────────────── */
+.rp-supp-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #0e2235;
+  border: 1px solid #1e4a6a;
+  border-radius: 20px;
+  color: #38bde0;
+  font-size: 11px;
+  font-weight: 600;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.rp-card-supp { border-color: #1e3a50; }
 
+/* ── 玩家共享图区块 ──────────────────────────────────────── */
+.supp-gallery {
+  margin-top: 28px;
+  border-top: 1px solid #1a2a38;
+  padding-top: 20px;
+}
+.supp-gallery-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 10px;
+}
+.supp-gallery-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #90c8de;
+  margin: 0;
+}
+.supp-upload-btn {
+  padding: 6px 14px;
+  background: #0b1e2c;
+  border: 1px solid #1e4a6a;
+  border-radius: 8px;
+  color: #38bde0;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s;
+}
+.supp-upload-btn:hover { background: #102333; }
+
+.supp-gallery-content { min-height: 60px; }
+
+.supp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.supp-item { position: relative; }
+.supp-img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #1a2e3e;
+  cursor: pointer;
+  transition: border-color .15s, opacity .15s;
+}
+.supp-img:hover { border-color: #38bde0; opacity: .9; }
+
+.supp-contrib {
+  font-size: 11px;
+  color: #5a8090;
+  margin-top: 4px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.supp-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+.supp-pg-btn {
+  padding: 5px 14px;
+  background: #0b1e2c;
+  border: 1px solid #1e3a50;
+  border-radius: 6px;
+  color: #7ab8cc;
+  font-size: 13px;
+  cursor: pointer;
+}
+.supp-pg-btn:hover:not(:disabled) { background: #102333; }
+.supp-pg-btn:disabled { opacity: .4; cursor: not-allowed; }
+.supp-pg-info { font-size: 13px; color: #4a7080; }
+
+.supp-loading, .supp-empty {
+  color: #4a6070;
+  font-size: 13px;
+  padding: 12px 0;
+  text-align: center;
+}
+
+/* 补充图面板内皮肤信息展示 */
+.sp-supp-skin-info {
+  background: #0a1e2c;
+  border: 1px solid #1a3040;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 6px;
+}
+.sp-supp-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #c0dce8;
+}
+.sp-supp-id {
+  font-size: 12px;
+  color: #4a8090;
+  margin-left: 8px;
+}
+.sp-supp-tip {
+  font-size: 12px;
+  color: #4a7080;
+  margin-top: 6px;
+}

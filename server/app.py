@@ -33,7 +33,7 @@ UPLOAD_DIR = Path(__file__).resolve().parent / "uploads" / "pending"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 ADMIN_TOKEN    = os.environ.get("ZPBK_ADMIN_TOKEN", "")
-MAX_FILE_BYTES = 5 * 1024 * 1024
+MAX_FILE_BYTES = 20 * 1024 * 1024
 app.config["MAX_CONTENT_LENGTH"] = 30 * 1024 * 1024
 UPLOAD_STORAGE_MODE = os.environ.get("UPLOAD_STORAGE_MODE", "oss").strip().lower() or "oss"
 
@@ -112,7 +112,7 @@ def after_request(resp):
 @app.errorhandler(RequestEntityTooLarge)
 def handle_large_body(_e):
     return jsonify({
-        "error": "请求体过大，请压缩图片后重试（单图<=5MB，总请求<=30MB）",
+        "error": "请求体过大，请压缩图片后重试（单图<=20MB）",
         "requestId": getattr(g, "request_id", "-"),
     }), 413
 
@@ -192,6 +192,19 @@ def init_db():
     ensure_column(conn, "submissions", "query_token", "query_token TEXT")
     ensure_column(conn, "submissions", "build_status", "build_status TEXT NOT NULL DEFAULT 'none'")
     ensure_column(conn, "submissions", "build_error", "build_error TEXT")
+    ensure_column(conn, "submissions", "submission_type", "submission_type TEXT NOT NULL DEFAULT 'new_skin'")
+    ensure_column(conn, "submissions", "supplement_skin_id", "supplement_skin_id TEXT")
+    ensure_column(conn, "submissions", "supplement_folder_code", "supplement_folder_code TEXT")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS supplement_images (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            skin_id     TEXT    NOT NULL,
+            oss_key     TEXT    NOT NULL,
+            contributor TEXT    NOT NULL DEFAULT '',
+            created_at  INTEGER NOT NULL
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_supp_skin ON supplement_images(skin_id)")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS build_jobs (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -250,27 +263,31 @@ def sub_to_dict(r) -> dict:
     has_b = bool(r["file_b"] or r["oss_key_b"])
     has_c = bool(r["file_c"] or r["oss_key_c"])
     has_d = bool(r["file_d"] or r["oss_key_d"])
+    cols = set(r.keys())
     return {
-        "id":          r["id"],
-        "status":      r["status"],
-        "storageMode": r["storage_mode"] or "local",
-        "weapon":      r["weapon"],
-        "skinName":    r["skin_name"],
-        "quality":     r["quality"] or "",
-        "material":    r["material"] or "",
-        "color1":      r["color1"] or "",
-        "color2":      r["color2"] or "",
-        "notes":       r["notes"] or "",
-        "contributor": r["contributor"],
-        "hasA":        has_a,
-        "hasB":        has_b,
-        "hasC":        has_c,
-        "hasD":        has_d,
-        "createdAt":   r["created_at"],
-        "reviewedAt":  r["reviewed_at"],
-        "reviewNote":  r["review_note"] or "",
-        "buildStatus": r["build_status"] or "none",
-        "buildError":  r["build_error"] or "",
+        "id":                   r["id"],
+        "status":               r["status"],
+        "storageMode":          r["storage_mode"] or "local",
+        "weapon":               r["weapon"],
+        "skinName":             r["skin_name"],
+        "quality":              r["quality"] or "",
+        "material":             r["material"] or "",
+        "color1":               r["color1"] or "",
+        "color2":               r["color2"] or "",
+        "notes":                r["notes"] or "",
+        "contributor":          r["contributor"],
+        "hasA":                 has_a,
+        "hasB":                 has_b,
+        "hasC":                 has_c,
+        "hasD":                 has_d,
+        "createdAt":            r["created_at"],
+        "reviewedAt":           r["reviewed_at"],
+        "reviewNote":           r["review_note"] or "",
+        "buildStatus":          r["build_status"] or "none",
+        "buildError":           r["build_error"] or "",
+        "submissionType":       r["submission_type"] if "submission_type" in cols else "new_skin",
+        "supplementSkinId":     r["supplement_skin_id"] if "supplement_skin_id" in cols else "",
+        "supplementFolderCode": r["supplement_folder_code"] if "supplement_folder_code" in cols else "",
     }
 
 def get_weapon_dir(weapon: str) -> str:
@@ -386,7 +403,7 @@ def validate_oss_object(bucket, key: str) -> dict:
     if size <= 0:
         raise RuntimeError("对象为空文件")
     if size > MAX_FILE_BYTES:
-        raise RuntimeError("单图超过 5MB 限制")
+        raise RuntimeError("单图超过 20MB 限制")
     part = bucket.get_object(key, byte_range=(0, 15)).read()
     magic_type = check_magic(part)
     if magic_type not in ("image/png", "image/jpeg"):
@@ -418,6 +435,14 @@ def enqueue_build_job(weapon: str) -> int:
     job_id = cur.lastrowid
     conn.close()
     return int(job_id)
+
+def _get_next_supplement_index(conn: sqlite3.Connection, skin_id: str) -> int:
+    row = conn.execute("SELECT COUNT(*) AS cnt FROM supplement_images WHERE skin_id=?", (skin_id,)).fetchone()
+    return int(row["cnt"]) + 1
+
+def _oss_public_url(key: str) -> str:
+    endpoint = OSS_ENDPOINT.replace("https://", "").replace("http://", "")
+    return f"https://{OSS_BUCKET}.{endpoint}/{key}"
 
 # ── 评论路由 ──────────────────────────────────────────────
 @app.route("/api/comments", methods=["GET"])
@@ -481,6 +506,7 @@ def create_submission():
         return jsonify({"error": "今日投稿次数已达上限，明天再来吧"}), 429
 
     data = request.get_json(silent=True) or {}
+    submission_type = clean(data.get("submissionType", "new_skin"), 20) or "new_skin"
     weapon      = clean(data.get("weapon", ""), 50)
     skin_name   = clean(data.get("skinName", ""), 50)
     quality     = clean(data.get("quality", ""), 10)
@@ -490,9 +516,20 @@ def create_submission():
     notes       = clean(data.get("notes", ""), 300)
     contributor = clean(data.get("contributor", ""), 20) or "匿名"
 
+    supplement_skin_id     = ""
+    supplement_folder_code = ""
+
+    if submission_type == "supplement":
+        supplement_skin_id     = clean(data.get("targetSkinId", ""), 100)
+        supplement_folder_code = clean(data.get("targetFolderCode", ""), 80)
+        if not supplement_skin_id or not supplement_folder_code:
+            return jsonify({"error": "补充图需要提供 targetSkinId 和 targetFolderCode"}), 400
+        if not valid_folder_code(supplement_folder_code):
+            return jsonify({"error": "targetFolderCode 非法（禁止包含路径分隔符或 ..）"}), 400
+
     if not weapon or not skin_name:
         return jsonify({"error": "武器和皮肤名不能为空"}), 400
-    if not quality or not material:
+    if submission_type == "new_skin" and (not quality or not material):
         return jsonify({"error": "品级和材质不能为空"}), 400
 
     now = int(time.time() * 1000)
@@ -500,9 +537,11 @@ def create_submission():
     conn = get_db()
     cur = conn.execute(
         """INSERT INTO submissions
-           (status, storage_mode, weapon, skin_name, quality, material, color1, color2, notes, contributor, created_at, query_token, build_status)
-           VALUES ('created', 'oss', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'none')""",
-        (weapon, skin_name, quality, material, color1, color2, notes, contributor, now, query_token),
+           (status, storage_mode, weapon, skin_name, quality, material, color1, color2, notes, contributor,
+            created_at, query_token, build_status, submission_type, supplement_skin_id, supplement_folder_code)
+           VALUES ('created', 'oss', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'none', ?, ?, ?)""",
+        (weapon, skin_name, quality, material, color1, color2, notes, contributor, now, query_token,
+         submission_type, supplement_skin_id, supplement_folder_code),
     )
     conn.commit()
     sub_id = int(cur.lastrowid)
@@ -670,11 +709,6 @@ def approve_submission(sub_id: int):
         return jsonify({"error": "无权限"}), 401
 
     data        = request.get_json(silent=True) or {}
-    folder_code = clean(data.get("folderCode", ""), 80)
-    if not folder_code:
-        return jsonify({"error": "folderCode 不能为空"}), 400
-    if not valid_folder_code(folder_code):
-        return jsonify({"error": "folderCode 非法（禁止包含路径分隔符或 ..）"}), 400
 
     conn = get_db()
     row = conn.execute("SELECT * FROM submissions WHERE id=?", (sub_id,)).fetchone()
@@ -687,6 +721,52 @@ def approve_submission(sub_id: int):
     if row["status"] != "pending_review":
         conn.close()
         return jsonify({"error": "该投稿状态不允许审核通过"}), 400
+
+    cols = set(row.keys())
+    sub_type = (row["submission_type"] if "submission_type" in cols else None) or "new_skin"
+
+    # ── 补充图审核 ────────────────────────────────────────────
+    if sub_type == "supplement":
+        target_skin_id     = row["supplement_skin_id"] if "supplement_skin_id" in cols else ""
+        target_folder_code = row["supplement_folder_code"] if "supplement_folder_code" in cols else ""
+        target_weapon      = row["weapon"]
+        weapon_dir         = get_weapon_dir(target_weapon)
+        src_key            = row["oss_key_a"]
+        if not src_key:
+            conn.close()
+            return jsonify({"error": "补充图未上传（oss_key_a 为空）"}), 400
+        try:
+            bucket = get_oss_bucket()
+            n   = _get_next_supplement_index(conn, target_skin_id)
+            ext = Path(src_key).suffix.lower()
+            if ext not in (".png", ".jpg", ".jpeg"):
+                ext = ".png"
+            dst_key = f"{weapon_dir}/{target_folder_code}/{target_skin_id}_S{n}{ext}"
+            bucket.copy_object(OSS_BUCKET, src_key, dst_key)
+            now_ts = int(time.time() * 1000)
+            conn.execute(
+                "INSERT INTO supplement_images (skin_id, oss_key, contributor, created_at) VALUES (?, ?, ?, ?)",
+                (target_skin_id, dst_key, row["contributor"] or "", now_ts),
+            )
+            conn.execute(
+                "UPDATE submissions SET status='approved', reviewed_at=?, review_note=?, build_status='none', build_error='' WHERE id=?",
+                (now_ts, "", sub_id),
+            )
+            conn.commit()
+        except Exception as e:
+            conn.close()
+            return jsonify({"error": f"处理补充图失败：{e}"}), 500
+        conn.close()
+        return jsonify({"ok": True, "buildQueued": False, "message": "补充图已通过"})
+
+    # ── 新皮肤审核 ────────────────────────────────────────────
+    folder_code = clean(data.get("folderCode", ""), 80)
+    if not folder_code:
+        conn.close()
+        return jsonify({"error": "folderCode 不能为空"}), 400
+    if not valid_folder_code(folder_code):
+        conn.close()
+        return jsonify({"error": "folderCode 非法（禁止包含路径分隔符或 ..）"}), 400
 
     weapon     = row["weapon"]
     weapon_dir = get_weapon_dir(weapon)
@@ -759,6 +839,29 @@ def reject_submission(sub_id: int):
     conn.commit()
     conn.close()
     return jsonify({"ok": True})
+
+
+@app.route("/api/supplements", methods=["GET"])
+def get_supplements():
+    """返回某皮肤已审核通过的玩家共享图列表（公开接口）"""
+    skin_id = clean(request.args.get("skinId", ""), 200)
+    if not skin_id:
+        return jsonify({"error": "skinId 不能为空"}), 400
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT * FROM supplement_images WHERE skin_id=? ORDER BY created_at ASC",
+        (skin_id,),
+    ).fetchall()
+    conn.close()
+    results = []
+    for r in rows:
+        results.append({
+            "id":          r["id"],
+            "url":         _oss_public_url(r["oss_key"]),
+            "contributor": r["contributor"] or "",
+            "createdAt":   r["created_at"],
+        })
+    return jsonify({"results": results})
 
 
 # ── 启动 ──────────────────────────────────────────────────

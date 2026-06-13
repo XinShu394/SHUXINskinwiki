@@ -207,45 +207,61 @@
     }
 
     body.innerHTML = results.map(function (sub) {
-      var suggested = suggestFolder(sub);
+      var isSupp   = sub.submissionType === 'supplement';
+      var suggested = isSupp ? '' : suggestFolder(sub);
       var dt = sub.createdAt ? new Date(sub.createdAt).toLocaleString('zh-CN') : '';
       var colorTag = sub.color1 ? (sub.color1 + (sub.color2 && sub.color2 !== '单色' ? '+' + sub.color2 : '')) : '';
 
-      return '<div class="rp-card" id="rpCard' + sub.id + '">' +
+      return '<div class="rp-card' + (isSupp ? ' rp-card-supp' : '') + '" id="rpCard' + sub.id + '">' +
 
-        // 缩略图行
+        // 缩略图行（补充图只有 A）
         '<div class="rp-thumbs">' +
-          ['A','B','C','D'].map(function (slot) {
-            var has = sub['has' + slot];
-            return '<div class="rp-thumb' + (has ? '' : ' rp-thumb-empty') + '">' +
-              '<span class="rp-thumb-label">' + slot + '</span>' +
-              (has ? '<img class="rp-thumb-img" id="rpImg' + sub.id + slot + '" src="" />' : '') +
-            '</div>';
-          }).join('') +
+          (isSupp
+            ? ('<div class="rp-thumb">' +
+                '<span class="rp-thumb-label">共享图</span>' +
+                '<img class="rp-thumb-img" id="rpImg' + sub.id + 'A" src="" />' +
+              '</div>')
+            : ['A','B','C','D'].map(function (slot) {
+                var has = sub['has' + slot];
+                return '<div class="rp-thumb' + (has ? '' : ' rp-thumb-empty') + '">' +
+                  '<span class="rp-thumb-label">' + slot + '</span>' +
+                  (has ? '<img class="rp-thumb-img" id="rpImg' + sub.id + slot + '" src="" />' : '') +
+                '</div>';
+              }).join('')
+          ) +
         '</div>' +
 
         // 元信息
         '<div class="rp-meta">' +
-          '<div class="rp-meta-title">' + esc(sub.weapon) + ' · ' + esc(sub.skinName) + '</div>' +
-          '<div class="rp-meta-tags">' +
-            (sub.quality  ? '<span class="rp-tag">' + esc(sub.quality)  + '</span>' : '') +
-            (sub.material ? '<span class="rp-tag">' + esc(sub.material) + '</span>' : '') +
-            (colorTag     ? '<span class="rp-tag">' + esc(colorTag)     + '</span>' : '') +
+          '<div class="rp-meta-title">' +
+            (isSupp
+              ? ('<span class="rp-supp-badge">玩家共享图</span> 为 <strong>' + esc(sub.supplementSkinId || sub.skinName) + '</strong> 补充')
+              : (esc(sub.weapon) + ' · ' + esc(sub.skinName))
+            ) +
           '</div>' +
+          (isSupp ? '' :
+            '<div class="rp-meta-tags">' +
+              (sub.quality  ? '<span class="rp-tag">' + esc(sub.quality)  + '</span>' : '') +
+              (sub.material ? '<span class="rp-tag">' + esc(sub.material) + '</span>' : '') +
+              (colorTag     ? '<span class="rp-tag">' + esc(colorTag)     + '</span>' : '') +
+            '</div>'
+          ) +
           (sub.notes ? '<div class="rp-meta-notes">"' + esc(sub.notes) + '"</div>' : '') +
           '<div class="rp-meta-contrib">投稿人：' + esc(sub.contributor) + '　' + esc(dt) + '</div>' +
         '</div>' +
 
-        // 目录名输入
-        '<div class="rp-folder-row">' +
-          '<span class="rp-folder-lbl">目录名</span>' +
-          '<input class="rp-folder-input" id="rpFolder' + sub.id + '" value="' + esc(suggested) + '" placeholder="如 UG0100 或 七彩雷" />' +
-          '<span class="rp-folder-tip">审核通过后在此目录存放图片</span>' +
-        '</div>' +
+        // 目录名输入（补充图不需要）
+        (isSupp ? '' :
+          '<div class="rp-folder-row">' +
+            '<span class="rp-folder-lbl">目录名</span>' +
+            '<input class="rp-folder-input" id="rpFolder' + sub.id + '" value="' + esc(suggested) + '" placeholder="如 UG0100 或 七彩雷" />' +
+            '<span class="rp-folder-tip">审核通过后在此目录存放图片</span>' +
+          '</div>'
+        ) +
 
         // 操作按钮
         '<div class="rp-actions" id="rpActions' + sub.id + '">' +
-          '<button class="rp-btn-approve" data-id="' + sub.id + '">✓ 通过发布</button>' +
+          '<button class="rp-btn-approve" data-id="' + sub.id + '" data-supp="' + (isSupp ? '1' : '0') + '">✓ 通过发布</button>' +
           '<button class="rp-btn-reject"  data-id="' + sub.id + '">✕ 拒绝</button>' +
         '</div>' +
 
@@ -284,7 +300,12 @@
     // 绑定通过/拒绝按钮
     body.querySelectorAll('.rp-btn-approve').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        var id = parseInt(btn.dataset.id);
+        var id    = parseInt(btn.dataset.id);
+        var isSupp = btn.dataset.supp === '1';
+        if (isSupp) {
+          doApprove(id, '', btn);
+          return;
+        }
         var fi = body.querySelector('#rpFolder' + id);
         var fc = fi ? fi.value.trim() : '';
         if (!fc) { alert('请先填写目录名（如 UG0100）'); return; }
