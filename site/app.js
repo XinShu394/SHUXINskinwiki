@@ -328,8 +328,8 @@
   function extractFolderCode(imageUrl) {
     if (!imageUrl) return "";
     const parts = String(imageUrl).split("/");
-    // URL: https://bucket.endpoint/weapon/folderCode/filename
-    return parts.length >= 3 ? parts[parts.length - 2] : "";
+    const raw = parts.length >= 3 ? parts[parts.length - 2] : "";
+    try { return decodeURIComponent(raw); } catch (e) { return raw; }
   }
 
   function loadSupplement(s) {
@@ -377,7 +377,8 @@
       let h = '<div class="supp-grid">';
       slice.forEach(function (item) {
         h += '<div class="supp-item">';
-        h += '<img class="supp-img" src="' + escapeHtml(item.url) + '" alt="玩家共享图" />';
+        // data-raw-url 保存未编码的原始 URL，点击时传给 openLightbox 避免双重编码
+        h += '<img class="supp-img" data-raw-url="' + escapeHtml(item.url) + '" src="' + escapeHtml(safeEncodeURI(item.url)) + '" alt="玩家共享图" />';
         if (item.contributor) {
           h += '<div class="supp-contrib">@' + escapeHtml(item.contributor) + '</div>';
         }
@@ -396,7 +397,7 @@
       container.innerHTML = h;
 
       container.querySelectorAll(".supp-img").forEach(function (img) {
-        img.addEventListener("click", function () { openLightbox(img.src); });
+        img.addEventListener("click", function () { openLightbox(img.dataset.rawUrl); });
       });
 
       const prevBtn = container.querySelector("#suppPrev");

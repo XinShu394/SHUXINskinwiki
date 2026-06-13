@@ -1657,6 +1657,38 @@ body {
   text-align: center;
 }
 
+/* 封面图选择 */
+.sp-uz-cover {
+  border-color: #c8a020 !important;
+  box-shadow: 0 0 0 1px #c8a020;
+}
+.sp-uz-cover-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: #c8a020;
+  color: #111;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.sp-uz-cover-btn {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(0,0,0,.65);
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #ddd;
+  font-size: 11px;
+  padding: 2px 7px;
+  cursor: pointer;
+  z-index: 2;
+}
+.sp-uz-cover-btn:hover { background: rgba(200,160,32,.8); color: #111; border-color: #c8a020; }
+
 /* 补充图面板内皮肤信息展示 */
 .sp-supp-skin-info {
   background: #0a1e2c;

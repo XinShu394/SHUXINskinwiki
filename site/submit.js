@@ -32,7 +32,7 @@
     D: { label: 'D  室外效果图', hint: '室外场景持枪截图' }
   };
 
-  var state = mkState();
+  var state   = mkState();
   var panelEl = null;
 
   global.Submit = { open: openPanel };
@@ -40,7 +40,9 @@
   // ── 初始化 ──────────────────────────────────────────────
   function mkState() {
     return { step: 1, weapon: '', skinName: '', quality: '', material: '',
-             color1: '', color2: '', files: { A: null, B: null, C: null, D: null } };
+             color1: '', color2: '',
+             files: { '1': null, '2': null, '3': null, '4': null },
+             coverSlot: '1' };
   }
 
   function openPanel() {
@@ -221,21 +223,26 @@
     h += '<button class="sp-close" id="spClose">×</button></div>';
     h += '<div class="sp-body">';
 
-    // 图片上传区
-    h += '<div class="sp-section"><div class="sp-label">截图上传 <span class="sp-hint">至少 1 张 · PNG/JPG · 单张 ≤ 20MB</span></div>';
+    // 图片上传区（4 张全部必填，选 1 张作封面）
+    h += '<div class="sp-section"><div class="sp-label">截图上传 <span class="sp-hint">4 张全部必填 · PNG/JPG · 单张 ≤ 20MB · 选一张设为封面图</span></div>';
     h += '<div class="sp-upload-grid">';
-    ['A', 'B', 'C', 'D'].forEach(function (slot) {
-      var info = SLOT_INFO[slot];
-      var f    = state.files[slot];
-      h += '<div class="sp-uz' + (f ? ' has-file' : '') + '" id="spUz' + slot + '" data-slot="' + slot + '">';
+    ['1', '2', '3', '4'].forEach(function (slot) {
+      var f       = state.files[slot];
+      var isCover = state.coverSlot === slot;
+      h += '<div class="sp-uz' + (f ? ' has-file' : '') + (isCover ? ' sp-uz-cover' : '') + '" id="spUz' + slot + '" data-slot="' + slot + '">';
       if (f) {
         h += '<img class="sp-uz-img" src="' + f.url + '" />';
+        if (isCover) {
+          h += '<div class="sp-uz-cover-badge">★ 封面图</div>';
+        } else {
+          h += '<button class="sp-uz-cover-btn" data-slot="' + slot + '">设为封面</button>';
+        }
         h += '<div class="sp-uz-fname">' + esc(f.name) + '</div>';
-        h += '<button class="sp-uz-del" data-slot="' + slot + '">✕ 移除</button>';
+        h += '<button class="sp-uz-del" data-slot="' + slot + '">✕</button>';
       } else {
         h += '<div class="sp-uz-plus">＋</div>';
-        h += '<div class="sp-uz-label">' + info.label + '</div>';
-        h += '<div class="sp-uz-hint">' + info.hint + '</div>';
+        h += '<div class="sp-uz-label">图 ' + slot + (isCover ? ' · 封面' : '') + '</div>';
+        h += '<div class="sp-uz-hint">任意角度截图</div>';
       }
       h += '<input class="sp-uz-input" id="spUzIn' + slot + '" type="file" accept="image/png,image/jpeg" />';
       h += '</div>';
@@ -306,17 +313,19 @@
       var submitBtn = panelEl.querySelector('#spSubmit');
       if (authChk && submitBtn) {
         authChk.addEventListener('change', function () {
-          submitBtn.disabled = !authChk.checked;
+          var hasAll = ['1','2','3','4'].every(function (s) { return state.files[s] !== null; });
+          submitBtn.disabled = !(authChk.checked && hasAll);
         });
       }
 
-      ['A', 'B', 'C', 'D'].forEach(function (slot) {
+      ['1', '2', '3', '4'].forEach(function (slot) {
         var zone  = panelEl.querySelector('#spUz' + slot);
         var input = panelEl.querySelector('#spUzIn' + slot);
         if (!zone || !input) return;
 
         zone.addEventListener('click', function (e) {
           if (e.target.classList.contains('sp-uz-del')) return;
+          if (e.target.classList.contains('sp-uz-cover-btn')) return;
           if (e.target.tagName === 'INPUT') return;
           input.click();
         });
@@ -341,6 +350,17 @@
             var s = delBtn.dataset.slot;
             if (state.files[s] && state.files[s].url) URL.revokeObjectURL(state.files[s].url);
             state.files[s] = null;
+            if (state.coverSlot === s) {
+              state.coverSlot = ['1','2','3','4'].find(function (x) { return x !== s && state.files[x]; }) || '1';
+            }
+            render(2);
+          });
+        }
+        var coverBtn = zone.querySelector('.sp-uz-cover-btn');
+        if (coverBtn) {
+          coverBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            state.coverSlot = coverBtn.dataset.slot;
             render(2);
           });
         }
@@ -360,8 +380,8 @@
 
   // ── 提交 ────────────────────────────────────────────────
   function doSubmit() {
-    var hasAny = Object.values(state.files).some(function (f) { return f !== null; });
-    if (!hasAny) { toast('至少上传一张图片'); return; }
+    var hasAll = ['1','2','3','4'].every(function (s) { return state.files[s] !== null; });
+    if (!hasAll) { toast('请上传全部 4 张截图后提交'); return; }
 
     var submitBtn = panelEl.querySelector('#spSubmit');
     var contributor = (panelEl.querySelector('#spContrib') || {}).value || '';
@@ -404,19 +424,23 @@
         var client = createOssClient(sts);
         var uploads = {};
         var chain = Promise.resolve();
-        ['A', 'B', 'C', 'D'].forEach(function (slot) {
-          if (!state.files[slot]) return;
+        // 封面图 → A，其余按顺序 → B/C/D
+        var ossSlots    = ['A', 'B', 'C', 'D'];
+        var allNums     = ['1', '2', '3', '4'];
+        var orderedNums = [state.coverSlot].concat(allNums.filter(function (x) { return x !== state.coverSlot; }));
+        orderedNums.forEach(function (numSlot, i) {
+          var ossSlot = ossSlots[i];
           chain = chain.then(function () {
-            var f = state.files[slot].file;
+            var f = state.files[numSlot].file;
             var ext = inferExt(f);
-            var key = sts.keyPrefix + slot + ext;
+            var key = sts.keyPrefix + ossSlot + ext;
             return client.multipartUpload(key, f, {
               timeout: 120000,
               mime: f.type || 'image/png'
             }).then(function (ret) {
               var etag = '';
               if (ret && ret.res && ret.res.headers && ret.res.headers.etag) etag = String(ret.res.headers.etag).replace(/"/g, '');
-              uploads[slot] = { key: key, etag: etag, contentType: f.type || '' };
+              uploads[ossSlot] = { key: key, etag: etag, contentType: f.type || '' };
             });
           });
         });
