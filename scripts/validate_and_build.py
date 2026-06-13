@@ -887,7 +887,13 @@ def main() -> int:
     records = kept_existing_records + records
     records.sort(key=lambda x: (x.get("weapon", ""), x.get("id", "")))
 
-    carry_over_meta = {k: v for k, v in existing_meta.items() if k not in generated_meta}
+    # 收集本次重建武器在旧数据中的所有 skin_id，用于清除已删除皮肤的孤立 meta 条目
+    selected_weapons = {r.weapon for r in rules}
+    rebuilt_existing_ids = {rec["id"] for rec in existing_data if rec.get("weapon") in selected_weapons}
+    carry_over_meta = {
+        k: v for k, v in existing_meta.items()
+        if k not in generated_meta and k not in rebuilt_existing_ids
+    }
     merged_meta = {**carry_over_meta, **generated_meta}
 
     covers = []
