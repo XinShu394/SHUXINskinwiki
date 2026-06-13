@@ -363,6 +363,17 @@ def parse_material_color_folder(rule: WeaponRule, folder_name: str) -> ParseResu
 
 
 def parse_material_color_core(name: str) -> tuple[str, str]:
+    # 优先尝试数字编码格式：[UJ][材质{1,2}][4位颜色码][可选3位流水]
+    # 兼容旧手工录入文件夹（如 UQ0802），与 K416 风格一致
+    numeric_match = re.fullmatch(r"([UJ])([TGQLMZ]{1,2})(\d{4})(\d{3})?", name)
+    if numeric_match:
+        quality = numeric_match.group(1)
+        material_str = numeric_match.group(2)
+        color_code = numeric_match.group(3)
+        serial = numeric_match.group(4) or "001"
+        return f"{quality}{material_str}{color_code}", serial
+
+    # 中文颜色名格式：[UJ][材质{1,2}][颜色汉字][可选3位流水]
     serial_match = re.search(r"(\d{3})$", name)
     serial = serial_match.group(1) if serial_match else "001"
     core = name[:-3] if serial_match else name
