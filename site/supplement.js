@@ -103,18 +103,18 @@
     if (!panelEl) return;
     var f = state.file;
     var h = '<div class="sp-inner"><div class="sp-head">';
-    h += '<span class="sp-title">上传共享图</span>';
+    h += '<span class="sp-title">上传补充图</span>';
     h += '<button class="sp-close" id="suppClose">×</button></div>';
     h += '<div class="sp-body">';
 
     // 皮肤信息
     h += '<div class="sp-section">';
-    h += '<div class="sp-label">为以下皮肤上传玩家共享图</div>';
+    h += '<div class="sp-label">为以下皮肤上传补充图</div>';
     h += '<div class="sp-supp-skin-info">';
     h += '<span class="sp-supp-name">' + esc(state.skinName) + '</span>';
     h += ' <span class="sp-supp-id">' + esc(state.skinId) + '</span>';
     h += '</div>';
-    h += '<div class="sp-supp-tip">任意角度均可（室内/室外/特写/市场图等），审核通过后显示为"玩家共享图片"</div>';
+    h += '<div class="sp-supp-tip">任意角度均可（室内/室外/特写/市场图等），审核通过后显示在皮肤详情页补充图区</div>';
     h += '</div>';
 
     // 上传区
@@ -146,7 +146,7 @@
     h += ' 我确认图片为本人游戏内截图，授权用于本非盈利图鉴展示</label>';
 
     h += '<div class="sp-footer">';
-    h += '<button class="sp-btn-primary" id="suppSubmit" disabled>提交共享图</button>';
+    h += '<button class="sp-btn-primary" id="suppSubmit" disabled>提交补充图</button>';
     h += '</div>';
     h += '</div></div>';
 
@@ -240,7 +240,7 @@
       .then(function (res) {
         if (!res.ok) {
           toast(formatApiError(res, '提交失败，请重试'));
-          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交共享图'; }
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交补充图'; }
           return Promise.reject(new Error('create failed'));
         }
         return loadOssSdk().then(function () { return res.data; });
@@ -249,7 +249,7 @@
         var sts = createData.sts || {};
         if (!sts.accessKeyId || !sts.securityToken || !sts.keyPrefix) {
           toast('上传凭证无效，请稍后重试');
-          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交共享图'; }
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交补充图'; }
           return Promise.reject(new Error('bad sts'));
         }
         var client = createOssClient(sts);
@@ -275,7 +275,7 @@
           }).then(parseApiResponse).then(function (commitRes) {
             if (!commitRes.ok) {
               toast(formatApiError(commitRes, '提交失败，请重试'));
-              if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交共享图'; }
+              if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交补充图'; }
               return;
             }
             showSuccess(createData.id, createData.queryToken || '');
@@ -286,7 +286,7 @@
         if (submitBtn && submitBtn.disabled) {
           toast('上传失败，请检查网络后重试');
         }
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交共享图'; }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交补充图'; }
       });
   }
 
@@ -298,8 +298,8 @@
     panelEl.innerHTML =
       '<div class="sp-inner sp-inner-success">' +
         '<div class="sp-success-icon">✓</div>' +
-        '<div class="sp-success-title">共享图提交成功！</div>' +
-        '<div class="sp-success-desc">编号 <strong>#' + id + '</strong>，审核通过后将在皮肤详情页展示。<br>感谢你的共享！</div>' +
+        '<div class="sp-success-title">补充图提交成功！</div>' +
+        '<div class="sp-success-desc">编号 <strong>#' + id + '</strong>，审核通过后将在皮肤详情页补充图区展示。<br>感谢你的贡献！</div>' +
         ticketHtml +
         '<button class="sp-btn-primary" id="suppDone">关闭</button>' +
       '</div>';

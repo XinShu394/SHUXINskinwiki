@@ -336,6 +336,8 @@
     const gallery = document.getElementById("supplementGallery");
     const content = document.getElementById("suppGalleryContent");
     const btn     = document.getElementById("suppUploadBtn");
+    const prevBtn = document.getElementById("suppPrev");
+    const nextBtn = document.getElementById("suppNext");
     if (!gallery || !content) return;
 
     // 绑定上传按钮
@@ -347,6 +349,10 @@
       };
     }
 
+    // 重置翻页按钮
+    if (prevBtn) prevBtn.disabled = true;
+    if (nextBtn) nextBtn.disabled = true;
+
     content.innerHTML = '<div class="supp-loading">加载中…</div>';
     gallery.classList.remove("hidden");
 
@@ -355,22 +361,27 @@
       .then(function (data) {
         const results = (data && data.results) || [];
         if (!results.length) {
-          content.innerHTML = '<div class="supp-empty">暂无玩家共享图，点击右上角按钮上传</div>';
+          content.innerHTML = '<div class="supp-empty">暂无补充图，点击右上角按钮上传</div>';
           return;
         }
-        renderSuppGallery(results, content);
+        renderSuppGallery(results, content, prevBtn, nextBtn);
       })
       .catch(function () {
         content.innerHTML = '<div class="supp-empty">加载失败，请刷新后重试</div>';
       });
   }
 
-  function renderSuppGallery(items, container) {
+  function renderSuppGallery(items, container, prevBtn, nextBtn) {
     const PAGE_SIZE = 4;
     let page = 0;
     const totalPages = Math.ceil(items.length / PAGE_SIZE);
 
-    function render() {
+    function updateNav() {
+      if (prevBtn) prevBtn.disabled = (page === 0);
+      if (nextBtn) nextBtn.disabled = (page >= totalPages - 1);
+    }
+
+    function renderPage() {
       const start = page * PAGE_SIZE;
       const slice = items.slice(start, start + PAGE_SIZE);
 
@@ -378,35 +389,28 @@
       slice.forEach(function (item) {
         h += '<div class="supp-item">';
         // data-raw-url 保存未编码的原始 URL，点击时传给 openLightbox 避免双重编码
-        h += '<img class="supp-img" data-raw-url="' + escapeHtml(item.url) + '" src="' + escapeHtml(safeEncodeURI(item.url)) + '" alt="玩家共享图" />';
+        h += '<img class="supp-img" data-raw-url="' + escapeHtml(item.url) + '" src="' + escapeHtml(safeEncodeURI(item.url)) + '" alt="补充图" />';
         if (item.contributor) {
           h += '<div class="supp-contrib">@' + escapeHtml(item.contributor) + '</div>';
         }
         h += '</div>';
       });
       h += '</div>';
-
       if (totalPages > 1) {
-        h += '<div class="supp-pager">';
-        h += '<button class="supp-pg-btn" id="suppPrev" ' + (page === 0 ? 'disabled' : '') + '>‹ 上一页</button>';
-        h += '<span class="supp-pg-info">' + (page + 1) + ' / ' + totalPages + '</span>';
-        h += '<button class="supp-pg-btn" id="suppNext" ' + (page >= totalPages - 1 ? 'disabled' : '') + '>下一页 ›</button>';
-        h += '</div>';
+        h += '<div class="supp-pg-info">' + (page + 1) + ' / ' + totalPages + '</div>';
       }
-
       container.innerHTML = h;
+      updateNav();
 
       container.querySelectorAll(".supp-img").forEach(function (img) {
         img.addEventListener("click", function () { openLightbox(img.dataset.rawUrl); });
       });
-
-      const prevBtn = container.querySelector("#suppPrev");
-      const nextBtn = container.querySelector("#suppNext");
-      if (prevBtn) prevBtn.addEventListener("click", function () { page--; render(); });
-      if (nextBtn) nextBtn.addEventListener("click", function () { page++; render(); });
     }
 
-    render();
+    if (prevBtn) prevBtn.onclick = function () { if (page > 0) { page--; renderPage(); } };
+    if (nextBtn) nextBtn.onclick = function () { if (page < totalPages - 1) { page++; renderPage(); } };
+
+    renderPage();
   }
 
   function escapeHtml(str) {
