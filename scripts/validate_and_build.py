@@ -718,10 +718,12 @@ def _write_weapon_data_js_atomically(data_dir: Path, weapon: str, records: list[
 
 
 def duplicate_priority(parsed: ParseResult) -> int:
-    # 优先保留标准编码目录（例如 UQ0409 或 UQ0409002），避免中文临时目录覆盖。
+    # 带 __ 注解的文件夹包含投稿人填写的皮肤名（name_hint），优先级最高。
+    if "__" in parsed.folder_code:
+        return 3
+    # 其次保留标准编码目录（例如 UQ0409 或 UQ0409002），避免中文临时目录覆盖。
     if parsed.folder_code == parsed.canonical_folder_code:
         return 2
-    # 对于模板武器 canonical 与 folder 相同，此分支不会触发；保留扩展点。
     return 1
 
 
