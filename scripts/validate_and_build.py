@@ -76,19 +76,29 @@ def oss_image_exists(bucket, key: str) -> bool:
 def validate_required_images_oss(
     bucket, weapon_dir: str, folder_code: str, skin_id: str,
     errors: list[str], warnings: list[str],
-) -> None:
-    """校验 OSS 上的图片。
+) -> dict[str, str]:
+    """校验 OSS 上的图片，同时探测 .png / .jpg 两种扩展名。
     A 缺失 → error（阻断构建）；B/C/D 缺失 → warning（允许只有 1 张图的投稿通过）。
-    兼容 {skin_id}_{slot}.png 和 {slot}.png 两种命名。
+    兼容 {skin_id}_{slot} 和 {slot} 两种文件名前缀。
+    返回 {slot: actual_ext} 字典，供 build_record 写入正确的图片 URL。
     """
+    ext_map: dict[str, str] = {}
     for slot in ("A", "B", "C", "D"):
-        standard_key = f"{weapon_dir}/{folder_code}/{skin_id}_{slot}.png"
-        fallback_key = f"{weapon_dir}/{folder_code}/{slot}.png"
-        if not oss_image_exists(bucket, standard_key) and not oss_image_exists(bucket, fallback_key):
+        found_ext: str | None = None
+        for ext in (".png", ".jpg", ".jpeg"):
+            standard_key = f"{weapon_dir}/{folder_code}/{skin_id}_{slot}{ext}"
+            fallback_key  = f"{weapon_dir}/{folder_code}/{slot}{ext}"
+            if oss_image_exists(bucket, standard_key) or oss_image_exists(bucket, fallback_key):
+                found_ext = ext
+                break
+        if found_ext:
+            ext_map[slot] = found_ext
+        else:
             if slot == "A":
-                errors.append(f"OSS 缺少主图: {standard_key}")
+                errors.append(f"OSS 缺少主图: {weapon_dir}/{folder_code}/{skin_id}_A.png/jpg")
             else:
-                warnings.append(f"OSS 缺少副图（可选）: {standard_key}")
+                warnings.append(f"OSS 缺少副图（可选）: {weapon_dir}/{folder_code}/{skin_id}_{slot}.png/jpg")
+    return ext_map
 
 
 @dataclass
@@ -662,17 +672,22 @@ def _img_url(weapon: str, folder_code: str, filename: str) -> str:
     return f"../{weapon}/{folder_code}/{filename}"
 
 
-def build_record(result: ParseResult) -> dict[str, Any]:
+def build_record(result: ParseResult, image_exts: dict[str, str] | None = None) -> dict[str, Any]:
+    """构建皮肤记录。image_exts 为 OSS 模式下探测到的实际扩展名，如 {'A': '.jpg', 'B': '.png'}，
+    缺失时默认 .png。"""
+    def _ext(slot: str) -> str:
+        return (image_exts or {}).get(slot, ".png")
+
     record = {
         "id": result.skin_id,
         "folderCode": result.folder_code,
         "normalizedCode": result.normalized_code,
         "weapon": result.weapon,
         "serial": result.serial,
-        "imageA": _img_url(result.weapon, result.folder_code, f"{result.skin_id}_A.png"),
-        "imageB": _img_url(result.weapon, result.folder_code, f"{result.skin_id}_B.png"),
-        "imageC": _img_url(result.weapon, result.folder_code, f"{result.skin_id}_C.png"),
-        "imageD": _img_url(result.weapon, result.folder_code, f"{result.skin_id}_D.png"),
+        "imageA": _img_url(result.weapon, result.folder_code, f"{result.skin_id}_A{_ext('A')}"),
+        "imageB": _img_url(result.weapon, result.folder_code, f"{result.skin_id}_B{_ext('B')}"),
+        "imageC": _img_url(result.weapon, result.folder_code, f"{result.skin_id}_C{_ext('C')}"),
+        "imageD": _img_url(result.weapon, result.folder_code, f"{result.skin_id}_D{_ext('D')}"),
         "status": "ready",
     }
     if result.template:
@@ -858,8 +873,9 @@ def main() -> int:
         for parsed in sorted(
             [x for x in chosen_by_id.values() if x.weapon == rule.weapon], key=lambda x: x.skin_id
         ):
+            image_exts: dict[str, str] | None = None
             if use_oss:
-                validate_required_images_oss(oss_bucket, rule.dir_name, parsed.folder_code, parsed.skin_id, errors, warnings)
+                image_exts = validate_required_images_oss(oss_bucket, rule.dir_name, parsed.folder_code, parsed.skin_id, errors, warnings)
             else:
                 folder = weapon_dir / parsed.folder_code
                 validate_required_images(folder, parsed.skin_id, errors)
@@ -883,7 +899,7 @@ def main() -> int:
                         parsed.folder_code = desired_folder
                 folder = weapon_dir / parsed.folder_code
                 validate_required_images(folder, parsed.skin_id, errors)
-            records.append(build_record(parsed))
+            records.append(build_record(parsed, image_exts=image_exts))
             generated_meta[parsed.skin_id] = meta_row
             count_by_weapon[rule.weapon] += 1
 
