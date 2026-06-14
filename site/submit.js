@@ -45,7 +45,8 @@
     return { step: 1, weapon: '', skinName: '', quality: '', material: '',
              color1: '', color2: '',
              files: { '1': null, '2': null, '3': null, '4': null },
-             coverSlot: '1' };
+             coverSlot: '1',
+             extraFiles: { S1: null, S2: null, S3: null } };
   }
 
   function openPanel() {
@@ -71,6 +72,9 @@
   function revokeFiles() {
     if (!state) return;
     Object.values(state.files).forEach(function (f) {
+      if (f && f.url) URL.revokeObjectURL(f.url);
+    });
+    Object.values(state.extraFiles || {}).forEach(function (f) {
       if (f && f.url) URL.revokeObjectURL(f.url);
     });
   }
@@ -332,6 +336,27 @@
     });
     h += '</div></div>';
 
+    // 补充图上传区（可选，最多 3 张）
+    h += '<div class="sp-section sp-extra-section">';
+    h += '<div class="sp-label">补充图 <span class="sp-hint">可选 · 最多 3 张 · 审核通过后展示在皮肤详情页右侧补充图列</span></div>';
+    h += '<div class="sp-upload-grid sp-upload-grid-extra">';
+    ['S1', 'S2', 'S3'].forEach(function (slot, idx) {
+      var f = state.extraFiles[slot];
+      h += '<div class="sp-uz sp-uz-extra' + (f ? ' has-file' : '') + '" id="spUzEx' + slot + '" data-exslot="' + slot + '">';
+      if (f) {
+        h += '<img class="sp-uz-img" src="' + f.url + '" />';
+        h += '<div class="sp-uz-fname">' + esc(f.name) + '</div>';
+        h += '<button class="sp-uz-del sp-uz-del-ex" data-exslot="' + slot + '">✕</button>';
+      } else {
+        h += '<div class="sp-uz-plus">＋</div>';
+        h += '<div class="sp-uz-label">补充图 ' + (idx + 1) + '</div>';
+        h += '<div class="sp-uz-hint">任意角度均可</div>';
+      }
+      h += '<input class="sp-uz-input" id="spUzExIn' + slot + '" type="file" accept="image/png,image/jpeg" />';
+      h += '</div>';
+    });
+    h += '</div></div>';
+
     // 昵称 + 备注
     h += '<div class="sp-row">';
     h += '<div class="sp-section sp-half"><div class="sp-label">昵称 <span class="sp-hint">可匿名</span></div>';
@@ -471,6 +496,43 @@
         }
       });
 
+      // 补充图 S1/S2/S3 的事件绑定
+      ['S1', 'S2', 'S3'].forEach(function (exSlot) {
+        var zone  = panelEl.querySelector('#spUzEx' + exSlot);
+        var input = panelEl.querySelector('#spUzExIn' + exSlot);
+        if (!zone || !input) return;
+
+        zone.addEventListener('click', function (e) {
+          if (e.target.classList.contains('sp-uz-del-ex')) return;
+          if (e.target.tagName === 'INPUT') return;
+          input.click();
+        });
+        zone.addEventListener('dragover', function (e) {
+          e.preventDefault(); zone.classList.add('drag-over');
+        });
+        zone.addEventListener('dragleave', function () {
+          zone.classList.remove('drag-over');
+        });
+        zone.addEventListener('drop', function (e) {
+          e.preventDefault(); zone.classList.remove('drag-over');
+          var file = e.dataTransfer.files[0];
+          if (file) handleExtraFile(exSlot, file);
+        });
+        input.addEventListener('change', function () {
+          if (input.files[0]) handleExtraFile(exSlot, input.files[0]);
+        });
+        var delBtn = zone.querySelector('.sp-uz-del-ex');
+        if (delBtn) {
+          delBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var s = delBtn.dataset.exslot;
+            if (state.extraFiles[s] && state.extraFiles[s].url) URL.revokeObjectURL(state.extraFiles[s].url);
+            state.extraFiles[s] = null;
+            render(3);
+          });
+        }
+      });
+
       if (submitBtn) submitBtn.addEventListener('click', doSubmit);
     }
   }
@@ -480,6 +542,14 @@
     if (file.size > 20 * 1024 * 1024)              { toast('图片超过 20MB 限制'); return; }
     if (state.files[slot] && state.files[slot].url) URL.revokeObjectURL(state.files[slot].url);
     state.files[slot] = { file: file, name: file.name, url: URL.createObjectURL(file) };
+    render(3);
+  }
+
+  function handleExtraFile(slot, file) {
+    if (!file.type.match(/^image\/(png|jpe?g)$/i)) { toast('仅支持 PNG / JPG 格式'); return; }
+    if (file.size > 20 * 1024 * 1024)              { toast('图片超过 20MB 限制'); return; }
+    if (state.extraFiles[slot] && state.extraFiles[slot].url) URL.revokeObjectURL(state.extraFiles[slot].url);
+    state.extraFiles[slot] = { file: file, name: file.name, url: URL.createObjectURL(file) };
     render(3);
   }
 
@@ -538,7 +608,9 @@
         var ossSlots    = ['A', 'B', 'C', 'D'];
         var allNums     = ['1', '2', '3', '4'];
         var orderedNums = [state.coverSlot].concat(allNums.filter(function (x) { return x !== state.coverSlot; }));
-        var total       = orderedNums.length;
+        // 收集非空的补充图 slot
+        var extraSlots = ['S1', 'S2', 'S3'].filter(function (s) { return state.extraFiles[s] !== null; });
+        var total       = orderedNums.length + extraSlots.length;
         var uploadedCount = 0;
 
         // 显示进度条
@@ -557,6 +629,7 @@
 
         setProgress(0, '准备上传…');
 
+        // 上传主图 ABCD
         orderedNums.forEach(function (numSlot, i) {
           var ossSlot = ossSlots[i];
           chain = chain.then(function () {
@@ -571,6 +644,28 @@
               var etag = '';
               if (ret && ret.res && ret.res.headers && ret.res.headers.etag) etag = String(ret.res.headers.etag).replace(/"/g, '');
               uploads[ossSlot] = { key: key, etag: etag, contentType: f.type || '' };
+              uploadedCount++;
+              setProgress(uploadedCount, uploadedCount < total
+                ? ('上传第 ' + (uploadedCount + 1) + ' / ' + total + ' 张…')
+                : '图片上传完毕，提交中…');
+            });
+          });
+        });
+
+        // 上传补充图 S1/S2/S3
+        extraSlots.forEach(function (exSlot) {
+          chain = chain.then(function () {
+            setProgress(uploadedCount, '上传补充图 ' + exSlot + '（' + (uploadedCount + 1) + ' / ' + total + '）…');
+            var f = state.extraFiles[exSlot].file;
+            var ext = inferExt(f);
+            var key = sts.keyPrefix + exSlot + ext;
+            return client.multipartUpload(key, f, {
+              timeout: 120000,
+              mime: f.type || 'image/png'
+            }).then(function (ret) {
+              var etag = '';
+              if (ret && ret.res && ret.res.headers && ret.res.headers.etag) etag = String(ret.res.headers.etag).replace(/"/g, '');
+              uploads[exSlot] = { key: key, etag: etag, contentType: f.type || '' };
               uploadedCount++;
               setProgress(uploadedCount, uploadedCount < total
                 ? ('上传第 ' + (uploadedCount + 1) + ' / ' + total + ' 张…')

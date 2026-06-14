@@ -196,6 +196,12 @@ def init_db():
     ensure_column(conn, "submissions", "submission_type", "submission_type TEXT NOT NULL DEFAULT 'new_skin'")
     ensure_column(conn, "submissions", "supplement_skin_id", "supplement_skin_id TEXT")
     ensure_column(conn, "submissions", "supplement_folder_code", "supplement_folder_code TEXT")
+    ensure_column(conn, "submissions", "oss_key_s1", "oss_key_s1 TEXT")
+    ensure_column(conn, "submissions", "oss_key_s2", "oss_key_s2 TEXT")
+    ensure_column(conn, "submissions", "oss_key_s3", "oss_key_s3 TEXT")
+    ensure_column(conn, "submissions", "oss_etag_s1", "oss_etag_s1 TEXT")
+    ensure_column(conn, "submissions", "oss_etag_s2", "oss_etag_s2 TEXT")
+    ensure_column(conn, "submissions", "oss_etag_s3", "oss_etag_s3 TEXT")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS supplement_images (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -289,6 +295,9 @@ def sub_to_dict(r) -> dict:
         "submissionType":       r["submission_type"] if "submission_type" in cols else "new_skin",
         "supplementSkinId":     r["supplement_skin_id"] if "supplement_skin_id" in cols else "",
         "supplementFolderCode": r["supplement_folder_code"] if "supplement_folder_code" in cols else "",
+        "hasS1":                bool(r["oss_key_s1"] if "oss_key_s1" in cols else None),
+        "hasS2":                bool(r["oss_key_s2"] if "oss_key_s2" in cols else None),
+        "hasS3":                bool(r["oss_key_s3"] if "oss_key_s3" in cols else None),
     }
 
 def get_weapon_dir(weapon: str) -> str:
@@ -595,7 +604,8 @@ def commit_submission():
     has_any = False
     key_prefix = f"{OSS_PENDING_PREFIX}/{sub_id}/"
 
-    for slot in ("A", "B", "C", "D"):
+    # ABCD 为主图，S1/S2/S3 为投稿时附带的补充图（可选）
+    for slot in ("A", "B", "C", "D", "S1", "S2", "S3"):
         info = uploads.get(slot) or {}
         key = clean(info.get("key", ""), 500)
         if not key:
@@ -616,11 +626,15 @@ def commit_submission():
             status='pending_review',
             storage_mode='oss',
             oss_key_a=?, oss_key_b=?, oss_key_c=?, oss_key_d=?,
-            oss_etag_a=?, oss_etag_b=?, oss_etag_c=?, oss_etag_d=?
+            oss_etag_a=?, oss_etag_b=?, oss_etag_c=?, oss_etag_d=?,
+            oss_key_s1=?, oss_key_s2=?, oss_key_s3=?,
+            oss_etag_s1=?, oss_etag_s2=?, oss_etag_s3=?
            WHERE id=?""",
         (
             key_updates.get("A"), key_updates.get("B"), key_updates.get("C"), key_updates.get("D"),
             etag_updates.get("A"), etag_updates.get("B"), etag_updates.get("C"), etag_updates.get("D"),
+            key_updates.get("S1"), key_updates.get("S2"), key_updates.get("S3"),
+            etag_updates.get("S1"), etag_updates.get("S2"), etag_updates.get("S3"),
             sub_id,
         ),
     )
@@ -661,7 +675,7 @@ def get_upload_preview(sub_id: int, slot: str):
     if not check_token():
         return jsonify({"error": "无权限"}), 401
     slot = slot.upper()
-    if slot not in ("A", "B", "C", "D"):
+    if slot not in ("A", "B", "C", "D", "S1", "S2", "S3"):
         return jsonify({"error": "无效图位"}), 400
 
     conn = get_db()
@@ -671,7 +685,8 @@ def get_upload_preview(sub_id: int, slot: str):
         return jsonify({"error": "投稿不存在"}), 404
 
     if (row["storage_mode"] or "local") == "oss":
-        key = row[slot_field(slot, "oss_key")]
+        col = f"oss_key_{slot.lower()}"
+        key = row[col] if col in row.keys() else None
         if not key:
             return jsonify({"error": "图片不存在"}), 404
         try:
@@ -681,7 +696,7 @@ def get_upload_preview(sub_id: int, slot: str):
         except Exception as e:
             return jsonify({"error": f"生成预览链接失败：{e}"}), 500
 
-    src_path = row[slot_field(slot, "file")]
+    src_path = row[slot_field(slot, "file")] if slot in ("A", "B", "C", "D") else None
     if not src_path:
         return jsonify({"error": "图片不存在"}), 404
     src = Path(src_path)
@@ -799,6 +814,25 @@ def approve_submission(sub_id: int):
                 fname = f"{skin_id}_{slot}{ext}" if skin_id else f"{slot}{ext}"
                 dst_key = f"{weapon_dir}/{effective_folder_code}/{fname}"
                 bucket.copy_object(OSS_BUCKET, src_key, dst_key)
+            # 处理投稿时附带的补充图 S1/S2/S3
+            if skin_id:
+                now_ts = int(time.time() * 1000)
+                supp_n = _get_next_supplement_index(conn, skin_id)
+                for s_slot in ("S1", "S2", "S3"):
+                    col = f"oss_key_{s_slot.lower()}"
+                    src_key = row[col] if col in row.keys() else None
+                    if not src_key:
+                        continue
+                    ext = Path(src_key).suffix.lower()
+                    if ext not in (".png", ".jpg", ".jpeg"):
+                        ext = ".png"
+                    dst_key = f"{weapon_dir}/{effective_folder_code}/{skin_id}_S{supp_n}{ext}"
+                    bucket.copy_object(OSS_BUCKET, src_key, dst_key)
+                    conn.execute(
+                        "INSERT INTO supplement_images (skin_id, oss_key, contributor, created_at) VALUES (?, ?, ?, ?)",
+                        (skin_id, dst_key, row["contributor"] or "", now_ts),
+                    )
+                    supp_n += 1
         except Exception as e:
             conn.close()
             return jsonify({"error": f"复制 OSS 图片失败：{e}"}), 500

@@ -227,6 +227,12 @@
                   '<span class="rp-thumb-label">' + slot + '</span>' +
                   (has ? '<img class="rp-thumb-img" id="rpImg' + sub.id + slot + '" src="" />' : '') +
                 '</div>';
+              }).join('') +
+              ['S1','S2','S3'].filter(function (s) { return sub['has' + s]; }).map(function (slot) {
+                return '<div class="rp-thumb rp-thumb-supp">' +
+                  '<span class="rp-thumb-label rp-thumb-label-supp">补充图</span>' +
+                  '<img class="rp-thumb-img" id="rpImg' + sub.id + slot + '" src="" />' +
+                '</div>';
               }).join('')
           ) +
         '</div>' +
@@ -289,6 +295,29 @@
               if (imgEl) imgEl.src = ret.val;
               return;
             }
+            var u = URL.createObjectURL(ret.val);
+            blobUrls.push(u);
+            if (imgEl) imgEl.src = u;
+          })
+          .catch(function () {});
+      });
+      // 懒加载投稿时附带的补充图 S1/S2/S3
+      ['S1','S2','S3'].forEach(function (slot) {
+        if (!sub['has' + slot]) return;
+        var imgEl = body.querySelector('#rpImg' + sub.id + slot);
+        if (!imgEl) return;
+        fetch(API_BASE + '/uploads/' + sub.id + '/' + slot, { headers: authHeaders() })
+          .then(function (r) {
+            if (!r.ok) return null;
+            var ct = (r.headers.get('content-type') || '').toLowerCase();
+            if (ct.indexOf('application/json') !== -1) {
+              return r.json().then(function (d) { return d && d.url ? { mode: 'url', val: d.url } : null; });
+            }
+            return r.blob().then(function (blob) { return { mode: 'blob', val: blob }; });
+          })
+          .then(function (ret) {
+            if (!ret) return;
+            if (ret.mode === 'url') { if (imgEl) imgEl.src = ret.val; return; }
             var u = URL.createObjectURL(ret.val);
             blobUrls.push(u);
             if (imgEl) imgEl.src = u;
