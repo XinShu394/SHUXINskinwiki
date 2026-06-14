@@ -35,3 +35,11 @@ server/comments.db
 docs/
 浓缩SOP/
 部署架构说明.md
+
+# ── 构建脚本生成文件（从 OSS 实时重建，不进 git）─────────────
+# ECS 由 build_worker 从 OSS 生成这些文件，不需要 git 追踪
+# 本地开发若需数据，跑 validate_and_build.py --source oss 即可
+site/data/
+site/meta.js
+site/covers.js
+site/reports/
