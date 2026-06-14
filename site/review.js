@@ -12,14 +12,17 @@
   );
 
   var QUALITY_CODES  = { '优品': 'U', '极品': 'J' };
-  var MATERIAL_CODES = { '贵金属': 'G', '透光': 'T', '镭射': 'L', '漆面': 'M', '木质': 'Z', '其他': 'Q' };
+  var MATERIAL_CODES = {
+    '贵金属': 'G', '透光': 'T', '镭射': 'L', '漆面': 'M', '木质': 'Z', '其他': 'Q',
+    '玉石': 'Y', '钻石': 'D', '水晶': 'C', '镭射贵金属': 'LG'
+  };
   var COLOR_CODES    = {
     '白': '01', '红': '02', '黄': '03', '青': '04', '紫': '05', '棕': '06',
     '黑': '07', '灰': '08', '橙': '09', '绿': '10', '蓝': '11', '粉': '12', '炫彩': '1111'
   };
-  // KC17 专属材质编码（含复合材质直接映射）
+  // KC17 专属材质编码（结构光仅 KC17 独有）
   var KC17_MATERIAL_CODES = { '结构光': 'J', '镭射贵金属': 'LG', '贵金属': 'G', '镭射': 'L', '其他': 'Q' };
-  // 模板武器（KC17 已移出，改用专属逻辑）
+  // 模板武器：无颜色码，目录名格式为 {q}{m}{皮肤名}
   var TEMPLATE_WEAPONS = ['AUG', 'SCARH', 'Vector', 'M4A1'];
   var SESSION_KEY = 'zpbk_review_token';
 
@@ -82,32 +85,43 @@
 
   function suggestFolder(sub) {
     var q = QUALITY_CODES[sub.quality] || '';
-    var m = MATERIAL_CODES[sub.material] || '';
-    // KC17 专属：支持复合材质 + 颜色码 + 模板名
-    if (sub.weapon === 'KC17') {
-      // material 可能是 "结构光+镭射" 或 "镭射贵金属" 等
-      var matParts = (sub.material || '').split('+');
-      var mCode = matParts.map(function (p) {
-        return KC17_MATERIAL_CODES[p.trim()] || MATERIAL_CODES[p.trim()] || '';
+    if (!q) return '';
+
+    // 将 material 字段（可能含 "材质1+材质2"）解析为编码字符串
+    function matToCode(matStr, extraCodes) {
+      var parts = (matStr || '').split('+');
+      return parts.map(function (p) {
+        var t = p.trim();
+        return (extraCodes && extraCodes[t]) || MATERIAL_CODES[t] || '';
       }).join('');
-      if (!q || !mCode) return '';
-      // 有颜色：新格式 {q}{mCode}{c1c2}{模板名}
+    }
+
+    // KC17 专属（结构光编码为 J，其余通用）
+    if (sub.weapon === 'KC17') {
+      var mCode = matToCode(sub.material, KC17_MATERIAL_CODES);
+      if (!mCode) return '';
       if (sub.color1) {
         var c1 = COLOR_CODES[sub.color1] || '??';
         var c2 = (sub.color2 && sub.color2 !== '单色' && COLOR_CODES[sub.color2])
                  ? COLOR_CODES[sub.color2] : '00';
         return q + mCode + c1 + c2 + (sub.skinName || '');
       }
-      // 无颜色：旧格式兼容 {q}{mCode}{模板名}
       return q + mCode + (sub.skinName || '');
     }
-    if (!q || !m) return '';
-    if (TEMPLATE_WEAPONS.indexOf(sub.weapon) !== -1) return q + m + (sub.skinName || '');
-    if (!sub.color1) return q + m + '????';
-    if (sub.color1 === '炫彩') return q + m + '1111';
+
+    // 通用逻辑：支持双材质
+    var mCode = matToCode(sub.material, null);
+    if (!mCode) return '';
+
+    // 模板武器（AUG/SCARH/Vector/M4A1）：无颜色码，用皮肤名
+    if (TEMPLATE_WEAPONS.indexOf(sub.weapon) !== -1) return q + mCode + (sub.skinName || '');
+
+    // 普通武器：{q}{mCode}{c1c2}
+    if (!sub.color1) return q + mCode + '????';
+    if (sub.color1 === '炫彩') return q + mCode + '1111';
     var c1 = COLOR_CODES[sub.color1] || '??';
     var c2 = (sub.color2 && sub.color2 !== '单色' && COLOR_CODES[sub.color2]) ? COLOR_CODES[sub.color2] : '00';
-    return q + m + c1 + c2;
+    return q + mCode + c1 + c2;
   }
 
   // ── 登录界面 ─────────────────────────────────────────────
