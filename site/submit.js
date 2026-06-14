@@ -25,8 +25,14 @@
     '黑': '07', '灰': '08', '橙': '09', '绿': '10', '蓝': '11', '粉': '12', '炫彩': '1111'
   };
 
-  // 模板武器（目录名不用颜色码，用皮肤名）
-  var TEMPLATE_WEAPONS = ['AUG', 'SCARH', 'Vector', 'M4A1', 'KC17'];
+  // KC17 专属材质选项与编码（支持双材质）
+  var KC17_MATERIAL_OPTS  = ['结构光', '镭射贵金属', '贵金属', '镭射', '其他'];
+  var KC17_MATERIAL_CODES = { '结构光': 'J', '镭射贵金属': 'LG', '贵金属': 'G', '镭射': 'L', '其他': 'Q' };
+  // 允许叠加第二材质的选项（其他 和 镭射贵金属 本身已复合，不再叠加）
+  var KC17_DUAL_ELIGIBLE  = ['结构光', '贵金属', '镭射'];
+
+  // 模板武器（目录名不用颜色码，用皮肤名）—— KC17 已移出，改用专属逻辑
+  var TEMPLATE_WEAPONS = ['AUG', 'SCARH', 'Vector', 'M4A1'];
 
   var SLOT_INFO = {
     A: { label: 'A  市场缩略图', hint: '市场列表中的预览小图' },
@@ -43,6 +49,7 @@
   // ── 初始化 ──────────────────────────────────────────────
   function mkState() {
     return { step: 1, weapon: '', skinName: '', quality: '', material: '',
+             material2: '',
              color1: '', color2: '',
              files: { '1': null, '2': null, '3': null, '4': null },
              coverSlot: '1',
@@ -147,9 +154,22 @@
 
   function isTemplate(w) { return TEMPLATE_WEAPONS.indexOf(w) !== -1; }
 
+  function isKC17(w) { return w === 'KC17'; }
+
   function buildCodeHint() {
     if (!state.quality || !state.material) return '—';
     var q = QUALITY_CODES[state.quality] || '?';
+    // KC17 专属：质量 + 材质码 + 颜色码（目录名后半段模板名由管理员审核时填写）
+    if (isKC17(state.weapon)) {
+      var m1 = KC17_MATERIAL_CODES[state.material] || '?';
+      var m2 = (state.material2 && KC17_DUAL_ELIGIBLE.indexOf(state.material) !== -1)
+               ? (KC17_MATERIAL_CODES[state.material2] || '') : '';
+      if (!state.color1) return q + m1 + m2 + '????';
+      if (state.color1 === '炫彩') return q + m1 + m2 + '1111';
+      var c1 = COLOR_CODES[state.color1] || '??';
+      var c2 = (state.color2 && state.color2 !== '单色') ? (COLOR_CODES[state.color2] || '??') : '00';
+      return q + m1 + m2 + c1 + c2 + '【+模板名】';
+    }
     var m = MATERIAL_CODES[state.material] || '?';
     if (isTemplate(state.weapon)) return '—';
     if (!state.color1) return q + m + '????';
@@ -212,7 +232,7 @@
   // ── Step 1：筛选 ──────────────────────────────────────────
   function buildStep1() {
     var weapons = enabledWeapons();
-    var showColor = !isTemplate(state.weapon);
+    var showColor = isKC17(state.weapon) || !isTemplate(state.weapon);
     var h = '<div class="sp-inner"><div class="sp-head">';
     h += stepHeader(1);
     h += '<span class="sp-title">投稿皮肤截图</span>';
@@ -229,9 +249,21 @@
 
     // 材质
     h += '<div class="sp-section"><div class="sp-label">材质 <span class="sp-req">必填</span></div>';
-    h += '<div class="sp-chips">' + chips(MATERIAL_OPTS, 'material', state.material) + '</div></div>';
+    if (isKC17(state.weapon)) {
+      h += '<div class="sp-chips">' + chips(KC17_MATERIAL_OPTS, 'material', state.material) + '</div>';
+      // 第二材质（仅当主材质可叠加时显示）
+      if (state.material && KC17_DUAL_ELIGIBLE.indexOf(state.material) !== -1) {
+        var m2opts = ['无'].concat(KC17_DUAL_ELIGIBLE.filter(function (o) { return o !== state.material; }));
+        var m2cur  = state.material2 || '无';
+        h += '<div class="sp-label" style="margin-top:6px">第二材质 <span class="sp-hint">可叠加，如结构光+镭射</span></div>';
+        h += '<div class="sp-chips">' + chips(m2opts, 'material2', m2cur) + '</div>';
+      }
+    } else {
+      h += '<div class="sp-chips">' + chips(MATERIAL_OPTS, 'material', state.material) + '</div>';
+    }
+    h += '</div>';
 
-    // 颜色（非模板武器）
+    // 颜色（非模板武器，KC17 也显示）
     if (showColor) {
       h += '<div class="sp-section"><div class="sp-label">主色</div>';
       h += '<div class="sp-chips">' + chips(COLOR_OPTS, 'color1', state.color1) + '</div></div>';
@@ -401,6 +433,8 @@
         var val  = chip.dataset.val;
         state[type] = val;
         if (type === 'color1') state.color2 = '';
+        // KC17 主材质切换时，清除第二材质（避免无效组合）
+        if (type === 'material') state.material2 = '';
         render(step);
       });
     });
@@ -573,7 +607,10 @@
       weapon: state.weapon,
       skinName: state.skinName,
       quality: state.quality,
-      material: state.material,
+      // KC17 双材质时合并为 "材质1+材质2" 存入 material 字段
+      material: (isKC17(state.weapon) && state.material2 && state.material2 !== '无')
+                ? (state.material + '+' + state.material2)
+                : state.material,
       color1: state.color1 || '',
       color2: state.color2 || '',
       notes: notes.trim(),

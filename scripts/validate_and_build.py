@@ -17,7 +17,7 @@ CONFIG_DIR = ROOT / "scripts" / "config"
 OSS_BASE = "https://skinwiki.oss-cn-guangzhou.aliyuncs.com"
 
 QUALITY_LABEL = {"U": "优品", "J": "极品"}
-MATERIAL_LABEL = {"T": "透光", "G": "贵金属", "Q": "其他", "L": "镭射", "M": "漆面", "Z": "木质"}
+MATERIAL_LABEL = {"T": "透光", "G": "贵金属", "Q": "其他", "L": "镭射", "M": "漆面", "Z": "木质", "J": "结构光"}
 COLOR_MAP = {
     "白": "01",
     "红": "02",
@@ -448,6 +448,64 @@ def parse_template_with_material_folder(rule: WeaponRule, folder_name: str) -> P
     )
 
 
+def parse_kc17_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
+    """KC17 专属解析：兼容新格式（带4位颜色码）与旧格式（无颜色码）。
+    新格式：{UJ}{材质1-2位，含J}{4位颜色码}{模板名}{可选3位流水}
+    旧格式：{UJ}{材质1-2位，不含J}{模板名}{可选3位流水}
+    """
+    base_name, annotation = split_folder_name(folder_name)
+    # 新格式：材质字符集含 J，之后跟4位数字颜色码，再跟模板名
+    m_new = re.fullmatch(r"([UJ])([TGQLMZJ]{1,2})(\d{4})(.+?)(\d{3})?", base_name)
+    if m_new:
+        quality  = m_new.group(1)
+        material = m_new.group(2)
+        color_code = m_new.group(3)
+        template   = m_new.group(4).strip()
+        serial     = m_new.group(5) or "001"
+        if not template:
+            raise ValueError(f"KC17 模板名为空: {folder_name}")
+        skin_id = f"KC17-{template}-{serial}"
+        normalized_code = f"{quality}{material}{color_code}"
+        return ParseResult(
+            skin_id=skin_id,
+            folder_code=folder_name,
+            normalized_code=normalized_code,
+            weapon=rule.weapon,
+            serial=serial,
+            template=template,
+            quality_label=QUALITY_LABEL.get(quality, ""),
+            material_label=decode_material(material),
+            color_label=decode_color_code(color_code),
+            canonical_folder_code=base_name,
+            name_hint=annotation.get("skinName", ""),
+        )
+    # 旧格式兼容（与 template_with_material 完全相同，保持旧内容不变）
+    m_old = re.fullmatch(r"([UJ])([TGQLMZ]{1,2})(.+?)(\d{3})?", base_name)
+    if m_old:
+        quality  = m_old.group(1)
+        material = m_old.group(2)
+        template = m_old.group(3).strip()
+        serial   = m_old.group(4) or "001"
+        if not template:
+            raise ValueError(f"KC17 旧格式模板名为空: {folder_name}")
+        skin_id = f"KC17-{template}-{serial}"
+        normalized_code = f"{quality}{material}"
+        return ParseResult(
+            skin_id=skin_id,
+            folder_code=folder_name,
+            normalized_code=normalized_code,
+            weapon=rule.weapon,
+            serial=serial,
+            template=template,
+            quality_label=QUALITY_LABEL.get(quality, ""),
+            material_label=decode_material(material),
+            color_label="NA",
+            canonical_folder_code=base_name,
+            name_hint=annotation.get("skinName", ""),
+        )
+    raise ValueError(f"KC17 目录不符合任何已知格式: {folder_name}")
+
+
 def parse_pure_template_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
     base_name, annotation = split_folder_name(folder_name)
     serial_match = re.search(r"(\d{3})$", base_name)
@@ -641,6 +699,8 @@ def parse_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
         return parse_material_color_folder(rule, folder_name)
     if rule.mode == "template_with_material":
         return parse_template_with_material_folder(rule, folder_name)
+    if rule.mode == "kc17":
+        return parse_kc17_folder(rule, folder_name)
     if rule.mode == "pure_template":
         return parse_pure_template_folder(rule, folder_name)
     if rule.mode == "asval":

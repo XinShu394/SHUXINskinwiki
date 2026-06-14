@@ -17,7 +17,10 @@
     '白': '01', '红': '02', '黄': '03', '青': '04', '紫': '05', '棕': '06',
     '黑': '07', '灰': '08', '橙': '09', '绿': '10', '蓝': '11', '粉': '12', '炫彩': '1111'
   };
-  var TEMPLATE_WEAPONS = ['AUG', 'SCARH', 'Vector', 'M4A1', 'KC17'];
+  // KC17 专属材质编码（含复合材质直接映射）
+  var KC17_MATERIAL_CODES = { '结构光': 'J', '镭射贵金属': 'LG', '贵金属': 'G', '镭射': 'L', '其他': 'Q' };
+  // 模板武器（KC17 已移出，改用专属逻辑）
+  var TEMPLATE_WEAPONS = ['AUG', 'SCARH', 'Vector', 'M4A1'];
   var SESSION_KEY = 'zpbk_review_token';
 
   var panelEl = null;
@@ -80,6 +83,24 @@
   function suggestFolder(sub) {
     var q = QUALITY_CODES[sub.quality] || '';
     var m = MATERIAL_CODES[sub.material] || '';
+    // KC17 专属：支持复合材质 + 颜色码 + 模板名
+    if (sub.weapon === 'KC17') {
+      // material 可能是 "结构光+镭射" 或 "镭射贵金属" 等
+      var matParts = (sub.material || '').split('+');
+      var mCode = matParts.map(function (p) {
+        return KC17_MATERIAL_CODES[p.trim()] || MATERIAL_CODES[p.trim()] || '';
+      }).join('');
+      if (!q || !mCode) return '';
+      // 有颜色：新格式 {q}{mCode}{c1c2}{模板名}
+      if (sub.color1) {
+        var c1 = COLOR_CODES[sub.color1] || '??';
+        var c2 = (sub.color2 && sub.color2 !== '单色' && COLOR_CODES[sub.color2])
+                 ? COLOR_CODES[sub.color2] : '00';
+        return q + mCode + c1 + c2 + (sub.skinName || '');
+      }
+      // 无颜色：旧格式兼容 {q}{mCode}{模板名}
+      return q + mCode + (sub.skinName || '');
+    }
     if (!q || !m) return '';
     if (TEMPLATE_WEAPONS.indexOf(sub.weapon) !== -1) return q + m + (sub.skinName || '');
     if (!sub.color1) return q + m + '????';
