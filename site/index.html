@@ -111,6 +111,10 @@
               <option value="粉色">粉色</option>
             </select>
           </div>
+          <div class="sort-group">
+            <button class="sort-btn active" data-sort="default">默认</button>
+            <button class="sort-btn" data-sort="hot">最热</button>
+          </div>
           <input id="searchInput" type="text" placeholder="搜索编号/编码/名称/颜色..." />
         </section>
 
@@ -143,7 +147,7 @@
             </div>
 
             <div class="meta">
-              <h3>皮肤信息</h3>
+              <h3>皮肤信息<button id="detailLikeBtn" class="detail-like-btn" aria-pressed="false" title="点赞"><span class="like-icon">♥</span><span class="like-count"></span></button></h3>
               <ul id="metaList"></ul>
               <div id="commentSection" class="cm-section"></div>
             </div>

@@ -24,7 +24,85 @@
   const metaById = window.SKIN_META || {};
   const weaponCovers = window.WEAPON_COVERS || [];
   const skins = (window.SKIN_DATA || []).map((item) => enrich(item));
-  const state = { query: "", nav: "home", quality: "", material: "", color: "" };
+  const state = { query: "", nav: "home", quality: "", material: "", color: "", sort: "default" };
+
+  let _skinStats = null; // null = 未加载，{} = 已加载
+
+  const LS_LIKED_KEY = "skin_liked_ids";
+
+  function getLikedSet() {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(LS_LIKED_KEY) || "[]"));
+    } catch {
+      return new Set();
+    }
+  }
+
+  function saveLikedSet(set) {
+    try {
+      localStorage.setItem(LS_LIKED_KEY, JSON.stringify([...set]));
+    } catch {}
+  }
+
+  function isLiked(skinId) {
+    return getLikedSet().has(skinId);
+  }
+
+  async function ensureSkinStats() {
+    if (_skinStats !== null) return;
+    try {
+      const res = await fetch(API_BASE + "/skin-stats");
+      _skinStats = await res.json();
+    } catch {
+      _skinStats = {};
+    }
+  }
+
+  function getSkinLikes(skinId) {
+    return (_skinStats && _skinStats[skinId] && _skinStats[skinId].likes) || 0;
+  }
+
+  function getSkinComments(skinId) {
+    return (_skinStats && _skinStats[skinId] && _skinStats[skinId].comments) || 0;
+  }
+
+  function getSkinHotScore(skinId) {
+    return getSkinLikes(skinId) * 1 + getSkinComments(skinId) * 3;
+  }
+
+  async function toggleSkinLike(skinId, btnEl) {
+    const liked = isLiked(skinId);
+    const action = liked ? "down" : "up";
+    try {
+      const res = await fetch(API_BASE + "/skins/" + encodeURIComponent(skinId) + "/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      const set = getLikedSet();
+      if (liked) {
+        set.delete(skinId);
+      } else {
+        set.add(skinId);
+      }
+      saveLikedSet(set);
+      if (_skinStats) {
+        if (!_skinStats[skinId]) _skinStats[skinId] = { likes: 0, comments: 0 };
+        _skinStats[skinId].likes = data.count;
+      }
+      updateLikeBtnUI(btnEl, skinId, data.count);
+    } catch {}
+  }
+
+  function updateLikeBtnUI(btn, skinId, count) {
+    if (!btn) return;
+    const liked = isLiked(skinId);
+    btn.classList.toggle("liked", liked);
+    btn.setAttribute("aria-pressed", liked ? "true" : "false");
+    const countEl = btn.querySelector(".like-count");
+    if (countEl) countEl.textContent = count > 0 ? count : "";
+  }
   const tutorialImagesByWeapon = {
     K416: [
       {
@@ -142,6 +220,19 @@
   });
   colorFilter.addEventListener("change", (e) => {
     state.color = e.target.value;
+    renderList();
+  });
+
+  document.getElementById("filterBar").addEventListener("click", async (e) => {
+    const btn = e.target.closest(".sort-btn");
+    if (!btn) return;
+    const sort = btn.dataset.sort;
+    if (sort === state.sort) return;
+    state.sort = sort;
+    document.querySelectorAll(".sort-btn").forEach((b) => b.classList.toggle("active", b.dataset.sort === sort));
+    if (sort === "hot") {
+      await ensureSkinStats();
+    }
     renderList();
   });
 
@@ -267,9 +358,17 @@
       return hay.includes(state.query);
     });
 
-    listView.innerHTML = shown
+    let sorted = shown.slice();
+    if (state.sort === "hot") {
+      sorted.sort((a, b) => getSkinHotScore(b.id) - getSkinHotScore(a.id));
+    }
+
+    listView.innerHTML = sorted
       .map(
-        (s) => `
+        (s) => {
+          const likeCount = getSkinLikes(s.id);
+          const liked = isLiked(s.id);
+          return `
       <article class="card" data-id="${escapeHtml(s.id)}">
         <img src="${safeEncodeURI(s.imageA)}" alt="${escapeHtml(s.id)} A图" />
         <div class="card-body">
@@ -279,15 +378,28 @@
             ${renderTags(s)}
           </div>
         </div>
+        <button class="card-like-btn${liked ? " liked" : ""}" data-skin-id="${escapeHtml(s.id)}" aria-pressed="${liked ? "true" : "false"}" title="点赞">
+          <span class="like-icon">♥</span><span class="like-count">${likeCount > 0 ? likeCount : ""}</span>
+        </button>
       </article>
-    `
+    `;
+        }
       )
       .join("");
 
     listView.querySelectorAll(".card").forEach((card) => {
-      card.addEventListener("click", () => {
+      card.addEventListener("click", (e) => {
+        if (e.target.closest(".card-like-btn")) return;
         const id = card.dataset.id;
         location.hash = `#skin=${encodeURIComponent(id)}`;
+      });
+    });
+
+    listView.querySelectorAll(".card-like-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const skinId = btn.dataset.skinId;
+        toggleSkinLike(skinId, btn);
       });
     });
   }
@@ -318,6 +430,24 @@
       ${s.rating ? `<li><strong>评分：</strong>${escapeHtml(s.rating)}</li>` : ""}
       ${s.comment ? `<li><strong>简评：</strong>${escapeHtml(s.comment)}</li>` : ""}
     `;
+
+    const detailLikeBtn = document.getElementById("detailLikeBtn");
+    if (detailLikeBtn) {
+      const likeCount = getSkinLikes(s.id);
+      const liked = isLiked(s.id);
+      detailLikeBtn.className = "detail-like-btn" + (liked ? " liked" : "");
+      detailLikeBtn.setAttribute("aria-pressed", liked ? "true" : "false");
+      detailLikeBtn.dataset.skinId = s.id;
+      const countEl = detailLikeBtn.querySelector(".like-count");
+      if (countEl) countEl.textContent = likeCount > 0 ? likeCount : "";
+      detailLikeBtn.onclick = () => toggleSkinLike(s.id, detailLikeBtn);
+
+      if (_skinStats === null) {
+        ensureSkinStats().then(() => {
+          updateLikeBtnUI(detailLikeBtn, s.id, getSkinLikes(s.id));
+        });
+      }
+    }
 
     if (window.Comments) window.Comments.load(s.id);
 

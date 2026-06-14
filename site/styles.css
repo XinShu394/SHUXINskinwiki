@@ -246,12 +246,41 @@ body {
   align-items: center;
   gap: 10px;
   margin-bottom: 14px;
+  flex-wrap: wrap;
 }
 
 .filter-group {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.sort-group {
+  display: flex;
+  gap: 6px;
+}
+
+.sort-btn {
+  background: #13242d;
+  border: 1px solid #295160;
+  color: #9dc4d8;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.sort-btn:hover {
+  border-color: #38bde0;
+  color: #e5f2fb;
+}
+
+.sort-btn.active {
+  background: #1a3d50;
+  border-color: #38bde0;
+  color: #38bde0;
+  font-weight: 600;
 }
 
 .filter-bar select,
@@ -349,6 +378,73 @@ body {
   border-radius: 999px;
   background: #17313c;
   border: 1px solid #2d5463;
+}
+
+/* ── 点赞按钮（卡片） ───────────────────────────────── */
+.card-like-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(15, 26, 32, 0.85);
+  border: 1px solid #2d5463;
+  color: #7ca8be;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  z-index: 5;
+}
+
+.card-like-btn:hover {
+  border-color: #e05575;
+  color: #e05575;
+}
+
+.card-like-btn.liked {
+  border-color: #e05575;
+  color: #e05575;
+  background: rgba(224, 85, 117, 0.15);
+}
+
+.card-like-btn .like-count {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* ── 点赞按钮（详情页） ────────────────────────────── */
+.detail-like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #17313c;
+  border: 1px solid #2d5463;
+  color: #7ca8be;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-left: 10px;
+  vertical-align: middle;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.detail-like-btn:hover {
+  border-color: #e05575;
+  color: #e05575;
+}
+
+.detail-like-btn.liked {
+  border-color: #e05575;
+  color: #e05575;
+  background: rgba(224, 85, 117, 0.15);
+}
+
+.detail-like-btn .like-count {
+  font-size: 13px;
 }
 
 .hidden {

@@ -226,6 +226,12 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_submissions_status ON submissions(status)")
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_submissions_query_token ON submissions(query_token)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_build_jobs_status ON build_jobs(status)")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS skin_likes (
+            skin_id TEXT PRIMARY KEY,
+            count   INTEGER NOT NULL DEFAULT 0
+        )
+    """)
     conn.commit()
     conn.close()
     print(f"[DB] 数据库就绪：{DB_PATH}")
@@ -500,6 +506,49 @@ def like_comment(comment_id: int):
     conn.commit()
     conn.close()
     return jsonify({"ok": True})
+
+
+# ── 皮肤点赞路由 ───────────────────────────────────────────
+@app.route("/api/skin-stats", methods=["GET"])
+def get_skin_stats():
+    conn = get_db()
+    like_rows = conn.execute("SELECT skin_id, count FROM skin_likes").fetchall()
+    comment_rows = conn.execute(
+        "SELECT skin_id, COUNT(*) as cnt FROM comments GROUP BY skin_id"
+    ).fetchall()
+    conn.close()
+    result = {}
+    for r in like_rows:
+        result.setdefault(r["skin_id"], {})["likes"] = r["count"]
+    for r in comment_rows:
+        result.setdefault(r["skin_id"], {})["comments"] = r["cnt"]
+    return jsonify(result)
+
+
+@app.route("/api/skins/<skin_id>/like", methods=["POST"])
+def like_skin(skin_id: str):
+    skin_id = clean(skin_id, 200)
+    if not skin_id:
+        return jsonify({"error": "skin_id 不能为空"}), 400
+    data = request.get_json(silent=True) or {}
+    action = data.get("action", "up")
+    conn = get_db()
+    if action == "up":
+        conn.execute(
+            "INSERT INTO skin_likes(skin_id, count) VALUES(?, 1) "
+            "ON CONFLICT(skin_id) DO UPDATE SET count = count + 1",
+            (skin_id,),
+        )
+    else:
+        conn.execute(
+            "INSERT INTO skin_likes(skin_id, count) VALUES(?, 0) "
+            "ON CONFLICT(skin_id) DO UPDATE SET count = MAX(0, count - 1)",
+            (skin_id,),
+        )
+    conn.commit()
+    row = conn.execute("SELECT count FROM skin_likes WHERE skin_id = ?", (skin_id,)).fetchone()
+    conn.close()
+    return jsonify({"count": row["count"] if row else 0})
 
 
 # ── 健康检查 ──────────────────────────────────────────────
