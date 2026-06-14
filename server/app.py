@@ -588,8 +588,12 @@ def create_submission():
 
     if not weapon or not skin_name:
         return jsonify({"error": "武器和皮肤名不能为空"}), 400
-    if submission_type == "new_skin" and (not quality or not material):
-        return jsonify({"error": "品级和材质不能为空"}), 400
+    # Vector / M4A1 无材质选项，不强制要求 material 字段
+    NO_MATERIAL_WEAPONS = {"Vector", "M4A1"}
+    if submission_type == "new_skin" and not quality:
+        return jsonify({"error": "品级不能为空"}), 400
+    if submission_type == "new_skin" and weapon not in NO_MATERIAL_WEAPONS and not material:
+        return jsonify({"error": "材质不能为空"}), 400
 
     now = int(time.time() * 1000)
     query_token = mk_query_token()
