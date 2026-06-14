@@ -333,12 +333,9 @@
   }
 
   function loadSupplement(s) {
-    const gallery = document.getElementById("supplementGallery");
     const content = document.getElementById("suppGalleryContent");
     const btn     = document.getElementById("suppUploadBtn");
-    const prevBtn = document.getElementById("suppPrev");
-    const nextBtn = document.getElementById("suppNext");
-    if (!gallery || !content) return;
+    if (!content) return;
 
     // 绑定上传按钮
     if (btn) {
@@ -349,68 +346,40 @@
       };
     }
 
-    // 重置翻页按钮
-    if (prevBtn) prevBtn.disabled = true;
-    if (nextBtn) nextBtn.disabled = true;
-
     content.innerHTML = '<div class="supp-loading">加载中…</div>';
-    gallery.classList.remove("hidden");
 
     fetch(API_BASE + "/supplements?skinId=" + encodeURIComponent(s.id))
       .then(function (r) { return r.json(); })
       .then(function (data) {
         const results = (data && data.results) || [];
         if (!results.length) {
-          content.innerHTML = '<div class="supp-empty">暂无补充图，点击右上角按钮上传</div>';
+          content.innerHTML = '<div class="supp-empty">暂无补充图<br>点击右上角 ＋ 上传</div>';
           return;
         }
-        renderSuppGallery(results, content, prevBtn, nextBtn);
+        renderSuppGallery(results, content);
       })
       .catch(function () {
-        content.innerHTML = '<div class="supp-empty">加载失败，请刷新后重试</div>';
+        content.innerHTML = '<div class="supp-empty">加载失败，请刷新重试</div>';
       });
   }
 
-  function renderSuppGallery(items, container, prevBtn, nextBtn) {
-    const PAGE_SIZE = 4;
-    let page = 0;
-    const totalPages = Math.ceil(items.length / PAGE_SIZE);
-
-    function updateNav() {
-      if (prevBtn) prevBtn.disabled = (page === 0);
-      if (nextBtn) nextBtn.disabled = (page >= totalPages - 1);
-    }
-
-    function renderPage() {
-      const start = page * PAGE_SIZE;
-      const slice = items.slice(start, start + PAGE_SIZE);
-
-      let h = '<div class="supp-grid">';
-      slice.forEach(function (item) {
-        h += '<div class="supp-item">';
-        // data-raw-url 保存未编码的原始 URL，点击时传给 openLightbox 避免双重编码
-        h += '<img class="supp-img" data-raw-url="' + escapeHtml(item.url) + '" src="' + escapeHtml(safeEncodeURI(item.url)) + '" alt="补充图" />';
-        if (item.contributor) {
-          h += '<div class="supp-contrib">@' + escapeHtml(item.contributor) + '</div>';
-        }
-        h += '</div>';
-      });
-      h += '</div>';
-      if (totalPages > 1) {
-        h += '<div class="supp-pg-info">' + (page + 1) + ' / ' + totalPages + '</div>';
+  function renderSuppGallery(items, container) {
+    let h = '<div class="supp-grid">';
+    items.forEach(function (item) {
+      h += '<div class="supp-item" data-raw-url="' + escapeHtml(item.url) + '">';
+      // data-raw-url 保存未编码的原始 URL，点击时传给 openLightbox 避免双重编码
+      h += '<img class="supp-img" src="' + escapeHtml(safeEncodeURI(item.url)) + '" alt="补充图" loading="lazy" />';
+      if (item.contributor) {
+        h += '<div class="supp-contrib">@' + escapeHtml(item.contributor) + '</div>';
       }
-      container.innerHTML = h;
-      updateNav();
+      h += '</div>';
+    });
+    h += '</div>';
+    container.innerHTML = h;
 
-      container.querySelectorAll(".supp-img").forEach(function (img) {
-        img.addEventListener("click", function () { openLightbox(img.dataset.rawUrl); });
-      });
-    }
-
-    if (prevBtn) prevBtn.onclick = function () { if (page > 0) { page--; renderPage(); } };
-    if (nextBtn) nextBtn.onclick = function () { if (page < totalPages - 1) { page++; renderPage(); } };
-
-    renderPage();
+    container.querySelectorAll(".supp-item").forEach(function (card) {
+      card.addEventListener("click", function () { openLightbox(card.dataset.rawUrl); });
+    });
   }
 
   function escapeHtml(str) {
