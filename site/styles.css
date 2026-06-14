@@ -1804,3 +1804,70 @@ body {
   color: #4a7080;
   margin-top: 6px;
 }
+
+/* ── 投稿 Step2 查重确认 ─────────────────────────────── */
+.sp-dupcheck-summary {
+  font-size: 13px;
+  color: #7ab8cc;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: #0b1a22;
+  border-radius: 8px;
+  border: 1px solid #1d3040;
+}
+.sp-dupcheck-notice {
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+.sp-dupcheck-ok {
+  background: #0a2218;
+  border: 1px solid #1a5038;
+  color: #4de8a0;
+}
+.sp-dupcheck-warn {
+  background: #1e1800;
+  border: 1px solid #5a4400;
+  color: #e8c84d;
+}
+.sp-match-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.sp-match-card {
+  background: #091520;
+  border: 1px solid #1d3040;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.sp-match-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+  background: #0b1820;
+}
+.sp-match-noimg {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #3a5060;
+}
+.sp-match-id {
+  font-size: 10px;
+  color: #4a7080;
+  padding: 4px 6px;
+  line-height: 1.3;
+  word-break: break-all;
+}

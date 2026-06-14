@@ -1,5 +1,8 @@
 /**
- * 砖皮百科 · 投稿面板
+ * 砖皮百科 · 投稿面板（三步流版）
+ * Step1: 筛选（枪型 / 稀有度 / 材质 / 颜色）
+ * Step2: 查重确认（展示数据库已有同类皮肤）
+ * Step3: 填写名称 + 上传图片（OSS 直传）
  * window.Submit.open() 打开面板
  */
 (function (global) {
@@ -144,9 +147,7 @@
     if (!state.quality || !state.material) return '—';
     var q = QUALITY_CODES[state.quality] || '?';
     var m = MATERIAL_CODES[state.material] || '?';
-    if (isTemplate(state.weapon)) {
-      return state.skinName.trim() ? (q + m + state.skinName.trim()) : (q + m + '…');
-    }
+    if (isTemplate(state.weapon)) return '—';
     if (!state.color1) return q + m + '????';
     if (state.color1 === '炫彩') return q + m + '1111';
     var c1 = COLOR_CODES[state.color1] || '??';
@@ -154,11 +155,46 @@
     return q + m + c1 + c2;
   }
 
+  // ── 查重过滤 ─────────────────────────────────────────────
+  function matchingSkinsInDB() {
+    var all = global.SKIN_DATA || [];
+    return all.filter(function (s) {
+      if (s.weapon !== state.weapon) return false;
+      if (state.quality  && s.qualityLabel  !== state.quality)  return false;
+      if (state.material && s.materialLabel !== state.material) return false;
+      if (state.color1) {
+        // colorLabel 格式："白色" / "白色 + 红色"，state.color1 = "白"
+        if (!s.colorLabel || s.colorLabel.indexOf(state.color1) === -1) return false;
+      }
+      return true;
+    });
+  }
+
   // ── 渲染 ────────────────────────────────────────────────
+  function stepHeader(active) {
+    var steps = [
+      { n: '①', label: '筛选' },
+      { n: '②', label: '查重' },
+      { n: '③', label: '上传' }
+    ];
+    var h = '<div class="sp-steps">';
+    steps.forEach(function (s, i) {
+      if (i > 0) h += '<span class="sp-step-sep">›</span>';
+      var cls = 'sp-step' + (i + 1 === active ? ' sp-step-active' : '');
+      h += '<span class="' + cls + '">' + s.n + ' ' + s.label + '</span>';
+    });
+    h += '</div>';
+    return h;
+  }
+
   function render(step) {
     if (!panelEl) return;
     state.step = step;
-    panelEl.innerHTML = step === 1 ? buildStep1() : buildStep2();
+    var html;
+    if (step === 1)      html = buildStep1();
+    else if (step === 2) html = buildStep2();
+    else                 html = buildStep3();
+    panelEl.innerHTML = html;
     bindEvents(step);
   }
 
@@ -169,12 +205,12 @@
     }).join('');
   }
 
+  // ── Step 1：筛选 ──────────────────────────────────────────
   function buildStep1() {
     var weapons = enabledWeapons();
     var showColor = !isTemplate(state.weapon);
     var h = '<div class="sp-inner"><div class="sp-head">';
-    h += '<div class="sp-steps"><span class="sp-step sp-step-active">① 皮肤信息</span>'
-       + '<span class="sp-step-sep">›</span><span class="sp-step">② 上传图片</span></div>';
+    h += stepHeader(1);
     h += '<span class="sp-title">投稿皮肤截图</span>';
     h += '<button class="sp-close" id="spClose">×</button></div>';
     h += '<div class="sp-body">';
@@ -182,10 +218,6 @@
     // 武器
     h += '<div class="sp-section"><div class="sp-label">选择武器</div>';
     h += '<div class="sp-chips">' + chips(weapons, 'weapon', state.weapon) + '</div></div>';
-
-    // 皮肤名
-    h += '<div class="sp-section"><div class="sp-label">皮肤名称 <span class="sp-req">必填</span></div>';
-    h += '<input class="sp-input" id="spName" maxlength="50" placeholder="例：七彩雷、纯银、蓝血" value="' + esc(state.skinName) + '" /></div>';
 
     // 稀有度
     h += '<div class="sp-section"><div class="sp-label">稀有度 <span class="sp-req">必填</span></div>';
@@ -207,7 +239,7 @@
       }
     }
 
-    // 编码预览
+    // 编码预览（模板武器显示"—"）
     h += '<div class="sp-code-preview">目录编码预览：<span class="sp-code-val">' + esc(buildCodeHint()) + '</span></div>';
 
     h += '<div class="sp-footer"><button class="sp-btn-primary" id="spNext">下一步 →</button></div>';
@@ -215,13 +247,64 @@
     return h;
   }
 
+  // ── Step 2：查重确认 ──────────────────────────────────────
   function buildStep2() {
+    var matches = matchingSkinsInDB();
     var h = '<div class="sp-inner"><div class="sp-head">';
-    h += '<div class="sp-steps"><span class="sp-step">① 皮肤信息</span>'
-       + '<span class="sp-step-sep">›</span><span class="sp-step sp-step-active">② 上传图片</span></div>';
-    h += '<span class="sp-title">投稿皮肤截图</span>';
+    h += stepHeader(2);
+    h += '<span class="sp-title">查重确认</span>';
     h += '<button class="sp-close" id="spClose">×</button></div>';
     h += '<div class="sp-body">';
+
+    // 筛选条件摘要
+    var summary = [state.weapon, state.quality, state.material];
+    if (state.color1) summary.push(state.color1 + (state.color2 && state.color2 !== '单色' ? '+' + state.color2 : ''));
+    h += '<div class="sp-dupcheck-summary">筛选条件：<strong>' + esc(summary.join(' · ')) + '</strong></div>';
+
+    if (matches.length === 0) {
+      h += '<div class="sp-dupcheck-notice sp-dupcheck-ok">';
+      h += '✓ 数据库中暂无该组合皮肤，可放心投稿新模板。';
+      h += '</div>';
+    } else {
+      h += '<div class="sp-dupcheck-notice sp-dupcheck-warn">';
+      h += '⚠ 已有 ' + matches.length + ' 款相似皮肤，请确认你投稿的是新模板（外观/配色不同）。';
+      h += '</div>';
+
+      // 缩略图网格
+      h += '<div class="sp-match-grid">';
+      matches.forEach(function (s) {
+        var imgSrc = s.imageA || '';
+        h += '<div class="sp-match-card">';
+        if (imgSrc) {
+          h += '<img class="sp-match-img" src="' + esc(imgSrc) + '" alt="' + esc(s.id) + '" loading="lazy" />';
+        } else {
+          h += '<div class="sp-match-noimg">无图</div>';
+        }
+        h += '<div class="sp-match-id">' + esc(s.id) + '</div>';
+        h += '</div>';
+      });
+      h += '</div>';
+    }
+
+    h += '<div class="sp-footer">';
+    h += '<button class="sp-btn-sec" id="spBack">← 返回</button>';
+    h += '<button class="sp-btn-primary" id="spConfirmNew">确认是新模板，继续 →</button>';
+    h += '</div>';
+    h += '</div></div>';
+    return h;
+  }
+
+  // ── Step 3：填写名称 + 上传 ───────────────────────────────
+  function buildStep3() {
+    var h = '<div class="sp-inner"><div class="sp-head">';
+    h += stepHeader(3);
+    h += '<span class="sp-title">填写信息并上传截图</span>';
+    h += '<button class="sp-close" id="spClose">×</button></div>';
+    h += '<div class="sp-body">';
+
+    // 皮肤名称（从 Step1 移到这里）
+    h += '<div class="sp-section"><div class="sp-label">皮肤名称 <span class="sp-req">必填</span></div>';
+    h += '<input class="sp-input" id="spName" maxlength="50" placeholder="例：七彩雷、纯银、蓝血" value="' + esc(state.skinName) + '" /></div>';
 
     // 图片上传区（4 张全部必填，选 1 张作封面）
     h += '<div class="sp-section"><div class="sp-label">截图上传 <span class="sp-hint">4 张全部必填 · PNG/JPG · 单张 ≤ 20MB · 选一张设为封面图</span></div>';
@@ -286,6 +369,7 @@
     var closeBtn = panelEl.querySelector('#spClose');
     if (closeBtn) closeBtn.addEventListener('click', closePanel);
 
+    // chip 选择（步骤 1 用）
     panelEl.querySelectorAll('.sp-chip').forEach(function (chip) {
       chip.addEventListener('click', function () {
         var type = chip.dataset.type;
@@ -297,34 +381,45 @@
     });
 
     if (step === 1) {
+      var nextBtn = panelEl.querySelector('#spNext');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', function () {
+          if (!state.weapon)   { toast('请先选择武器'); return; }
+          if (!state.quality)  { toast('请选择稀有度'); return; }
+          if (!state.material) { toast('请选择材质'); return; }
+          render(2);
+        });
+      }
+
+    } else if (step === 2) {
+      var backBtn2 = panelEl.querySelector('#spBack');
+      if (backBtn2) backBtn2.addEventListener('click', function () { render(1); });
+
+      var confirmBtn = panelEl.querySelector('#spConfirmNew');
+      if (confirmBtn) confirmBtn.addEventListener('click', function () { render(3); });
+
+    } else {
+      // Step 3
+      var backBtn3 = panelEl.querySelector('#spBack');
+      if (backBtn3) backBtn3.addEventListener('click', function () { render(2); });
+
+      var authChk   = panelEl.querySelector('#spAuth');
+      var submitBtn = panelEl.querySelector('#spSubmit');
+
+      function updateSubmitBtn() {
+        if (!authChk || !submitBtn) return;
+        var hasAll  = ['1','2','3','4'].every(function (s) { return state.files[s] !== null; });
+        var hasName = (panelEl.querySelector('#spName') || {}).value && panelEl.querySelector('#spName').value.trim().length > 0;
+        submitBtn.disabled = !(authChk.checked && hasAll && hasName);
+      }
+
+      if (authChk) authChk.addEventListener('change', updateSubmitBtn);
+
       var nameInput = panelEl.querySelector('#spName');
       if (nameInput) {
         nameInput.addEventListener('input', function () {
           state.skinName = nameInput.value;
-          var codeEl = panelEl.querySelector('.sp-code-val');
-          if (codeEl) codeEl.textContent = buildCodeHint();
-        });
-      }
-      var nextBtn = panelEl.querySelector('#spNext');
-      if (nextBtn) {
-        nextBtn.addEventListener('click', function () {
-          if (!state.weapon)            { toast('请先选择武器'); return; }
-          if (!state.skinName.trim())   { toast('请填写皮肤名称'); return; }
-          if (!state.quality)           { toast('请选择稀有度'); return; }
-          if (!state.material)          { toast('请选择材质'); return; }
-          render(2);
-        });
-      }
-    } else {
-      var backBtn = panelEl.querySelector('#spBack');
-      if (backBtn) backBtn.addEventListener('click', function () { render(1); });
-
-      var authChk   = panelEl.querySelector('#spAuth');
-      var submitBtn = panelEl.querySelector('#spSubmit');
-      if (authChk && submitBtn) {
-        authChk.addEventListener('change', function () {
-          var hasAll = ['1','2','3','4'].every(function (s) { return state.files[s] !== null; });
-          submitBtn.disabled = !(authChk.checked && hasAll);
+          updateSubmitBtn();
         });
       }
 
@@ -363,7 +458,7 @@
             if (state.coverSlot === s) {
               state.coverSlot = ['1','2','3','4'].find(function (x) { return x !== s && state.files[x]; }) || '1';
             }
-            render(2);
+            render(3);
           });
         }
         var coverBtn = zone.querySelector('.sp-uz-cover-btn');
@@ -371,7 +466,7 @@
           coverBtn.addEventListener('click', function (e) {
             e.stopPropagation();
             state.coverSlot = coverBtn.dataset.slot;
-            render(2);
+            render(3);
           });
         }
       });
@@ -385,7 +480,7 @@
     if (file.size > 20 * 1024 * 1024)              { toast('图片超过 20MB 限制'); return; }
     if (state.files[slot] && state.files[slot].url) URL.revokeObjectURL(state.files[slot].url);
     state.files[slot] = { file: file, name: file.name, url: URL.createObjectURL(file) };
-    render(2);
+    render(3);
   }
 
   // ── 提交 ────────────────────────────────────────────────
@@ -393,7 +488,12 @@
     var hasAll = ['1','2','3','4'].every(function (s) { return state.files[s] !== null; });
     if (!hasAll) { toast('请上传全部 4 张截图后提交'); return; }
 
-    var submitBtn = panelEl.querySelector('#spSubmit');
+    var nameEl = panelEl.querySelector('#spName');
+    var skinName = nameEl ? nameEl.value.trim() : state.skinName.trim();
+    if (!skinName) { toast('请填写皮肤名称'); return; }
+    state.skinName = skinName;
+
+    var submitBtn   = panelEl.querySelector('#spSubmit');
     var contributor = (panelEl.querySelector('#spContrib') || {}).value || '';
     var notes       = (panelEl.querySelector('#spNotes') || {}).value || '';
 
@@ -401,7 +501,7 @@
 
     var payload = {
       weapon: state.weapon,
-      skinName: state.skinName.trim(),
+      skinName: state.skinName,
       quality: state.quality,
       material: state.material,
       color1: state.color1 || '',
