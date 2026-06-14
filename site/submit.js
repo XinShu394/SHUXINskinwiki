@@ -437,7 +437,7 @@
     h += '<input class="sp-input" id="spName" maxlength="50" placeholder="例：七彩雷、纯银、蓝血" value="' + esc(state.skinName) + '" /></div>';
 
     // 图片上传区（4 张全部必填，选 1 张作封面）
-    h += '<div class="sp-section"><div class="sp-label">截图上传 <span class="sp-hint">4 张全部必填 · PNG/JPG · 单张 ≤ 20MB · 选一张设为封面图</span></div>';
+    h += '<div class="sp-section"><div class="sp-label">截图上传 <span class="sp-hint">4 张全部<span class="sp-req">必填</span> · PNG/JPG · 单张 ≤ 20MB · 选一张设为封面图</span></div>';
     h += '<div class="sp-upload-grid">';
     ['1', '2', '3', '4'].forEach(function (slot) {
       var f       = state.files[slot];
@@ -464,7 +464,7 @@
 
     // 补充图上传区（可选，最多 3 张）
     h += '<div class="sp-section sp-extra-section">';
-    h += '<div class="sp-label">补充图 <span class="sp-hint">可选 · 最多 3 张 · 审核通过后展示在皮肤详情页右侧补充图列</span></div>';
+    h += '<div class="sp-label">补充图 <span class="sp-optional">选填</span><span class="sp-hint"> · 最多 3 张 · 审核通过后展示在皮肤详情页右侧补充图列</span></div>';
     h += '<div class="sp-upload-grid sp-upload-grid-extra">';
     ['S1', 'S2', 'S3'].forEach(function (slot, idx) {
       var f = state.extraFiles[slot];

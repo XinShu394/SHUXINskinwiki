@@ -1149,6 +1149,8 @@ body {
 
 .sp-req { color: #e87070; font-size: 10px; margin-left: 3px; }
 
+.sp-optional { color: #38bde0; font-size: 11px; font-weight: 700; margin-left: 3px; }
+
 .sp-hint { color: #4a6878; font-size: 11px; font-weight: 400; }
 
 .sp-input {
