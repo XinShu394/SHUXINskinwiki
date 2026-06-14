@@ -260,6 +260,12 @@ body {
   gap: 6px;
 }
 
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .sort-btn {
   background: #13242d;
   border: 1px solid #295160;
