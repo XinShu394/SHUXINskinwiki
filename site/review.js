@@ -111,10 +111,12 @@
 
     // 通用逻辑：支持双材质
     var mCode = matToCode(sub.material, null);
-    if (!mCode) return '';
 
     // 模板武器（AUG/SCARH/Vector/M4A1）：无颜色码，用皮肤名
+    // Vector/M4A1 无材质，mCode 为空时直接用 q+skinName
     if (TEMPLATE_WEAPONS.indexOf(sub.weapon) !== -1) return q + mCode + (sub.skinName || '');
+
+    if (!mCode) return '';
 
     // 普通武器：{q}{mCode}{c1c2}
     if (!sub.color1) return q + mCode + '????';
