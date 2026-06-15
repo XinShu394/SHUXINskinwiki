@@ -509,7 +509,7 @@ body {
 .meta ul {
   list-style: none;
   padding: 0;
-  margin: 0 0 14px;
+  margin: 0;
 }
 
 .meta li {
@@ -517,9 +517,17 @@ body {
   border-bottom: 1px dashed #2a4753;
 }
 
-/* ── 评论区 ──────────────────────────────────────── */
+/* ── 评论区（桌面：卡片样式，留在第3列 meta 下方） ── */
+#commentSection {
+  background: #0f1a20;
+  border: 1px solid #203842;
+  border-radius: 10px;
+  padding: 12px;
+  grid-column: 3;
+}
+
 .cm-section {
-  margin-top: 4px;
+  /* 移动端用 order 控制位置，不设 margin-top 避免影响 flex 间距 */
 }
 
 /* 顶栏：标题 + 计数 + 排序 */
@@ -1998,21 +2006,97 @@ body {
     grid-column: 2 / 3;
     grid-row: 1 / 3;
   }
+  #commentSection {
+    grid-column: 1 / -1;  /* 底部横跨两列 */
+    grid-row: auto;
+  }
 }
 
-/* 手机（< 640px）：单列堆叠 */
+/* ── 手机侧边栏（< 768px）：收窄，隐藏公告和联系区 ── */
+@media (max-width: 768px) {
+  .app {
+    grid-template-columns: 108px 1fr;
+  }
+  .sidebar {
+    padding: 10px 6px;
+  }
+  .brand {
+    font-size: 12px;
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+  .brand span {
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 72px;
+  }
+  .version-notice,
+  .brand-contact {
+    display: none;
+  }
+  .nav-btn {
+    font-size: 12px;
+    padding: 8px 7px;
+    margin-bottom: 5px;
+  }
+  .action-btns {
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 8px;
+  }
+  .action-btn {
+    font-size: 11px;
+    padding: 7px 4px;
+  }
+  .content {
+    padding: 10px 8px;
+  }
+  /* 列表卡片在小屏幕下保证单列不溢出 */
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+  /* 筛选栏紧凑化 */
+  .filter-bar select,
+  #searchInput {
+    font-size: 12px;
+    padding: 7px 8px;
+  }
+}
+
+/* ── 手机详情页（< 640px）：纵向重排，信息→图片→补充图→评论 ── */
 @media (max-width: 640px) {
   .detail-main {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  /* 顺序：皮肤信息 → 主图 → 补充图 → 评论 */
+  .meta              { order: 1; }
+  .images            { order: 2; }
+  #supplementGallery { order: 3; }
+  #commentSection    { order: 4; }
+
+  /* C/D 图每行一张（单列） */
+  .sub-images {
     grid-template-columns: 1fr;
-    grid-template-rows: auto;
+    gap: 10px;
   }
-  #supplementGallery {
-    grid-column: 1;
-    grid-row: auto;
+
+  /* 评论区在 flex 中不再需要 grid-column */
+  #commentSection {
+    grid-column: unset;
   }
-  .meta {
-    grid-column: 1;
-    grid-row: auto;
-  }
+
   .supp-img { height: 130px; }
+
+  /* 详情页头部在窄屏略微紧凑 */
+  .detail-head {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .detail-head h2 {
+    font-size: 16px;
+  }
 }
