@@ -644,6 +644,7 @@ def parse_asval_all_folders(rule: WeaponRule, weapon_dir: Path) -> dict[str, Par
             serial = f"{idx:03d}"
             skin_id = f"{rule.weapon}-{normalized_code}-{serial}"
             canonical_folder = normalized_code if serial == "001" else f"{normalized_code}{serial}"
+            _, annotation = split_folder_name(folder_name)
             result[folder_name] = ParseResult(
                 skin_id=skin_id,
                 folder_code=folder_name,
@@ -655,7 +656,7 @@ def parse_asval_all_folders(rule: WeaponRule, weapon_dir: Path) -> dict[str, Par
                 material_label=decode_material(material),
                 color_label=color_label,
                 canonical_folder_code=canonical_folder,
-                name_hint="",
+                name_hint=annotation.get("skinName", ""),
             )
     return result
 
@@ -683,6 +684,7 @@ def parse_asval_all_folders_oss(bucket, rule: WeaponRule) -> dict[str, ParseResu
             serial = f"{idx:03d}"
             skin_id = f"{rule.weapon}-{normalized_code}-{serial}"
             canonical_folder = normalized_code if serial == "001" else f"{normalized_code}{serial}"
+            _, annotation = split_folder_name(folder_name)
             result[folder_name] = ParseResult(
                 skin_id=skin_id,
                 folder_code=folder_name,
@@ -694,7 +696,7 @@ def parse_asval_all_folders_oss(bucket, rule: WeaponRule) -> dict[str, ParseResu
                 material_label=decode_material(material),
                 color_label=color_label,
                 canonical_folder_code=canonical_folder,
-                name_hint="",
+                name_hint=annotation.get("skinName", ""),
             )
     return result
 
