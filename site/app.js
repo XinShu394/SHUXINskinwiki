@@ -4,7 +4,11 @@
   }
 
   const qualityMap = { U: "优品", J: "极品" };
-  const materialMap = { T: "透光", G: "贵金属", Q: "其他", L: "镭射", M: "漆面", Z: "木质" };
+  const materialMap = {
+    T: "透光", G: "贵金属", Q: "其他", L: "镭射", M: "漆面", Z: "木质",
+    Y: "玉石", D: "钻石", C: "水晶", J: "结构光",
+    LG: "镭射贵金属",
+  };
   const colorMap = {
     "00": "单色",
     "01": "白色",
@@ -19,6 +23,21 @@
     "10": "绿色",
     "11": "蓝色",
     "12": "粉色",
+  };
+
+  const WEAPON_FILTER_CONFIG = {
+    ASVAL:  { materialOpts: ["贵金属", "玉石", "镭射", "漆面", "木质", "其他"], showColor: true },
+    K416:   { materialOpts: ["贵金属", "透光", "其他"],                         showColor: true },
+    QBZ95:  { materialOpts: ["贵金属", "其他"],                                 showColor: true },
+    腾龙:   { materialOpts: ["贵金属", "镭射", "镭射贵金属", "其他"],           showColor: true },
+    AUG:    { materialOpts: ["贵金属", "镭射", "其他"],                         showColor: true },
+    M4A1:   { materialOpts: [],                                                 showColor: false },
+    M7:     { materialOpts: ["贵金属", "透光", "镭射", "钻石", "镭射贵金属", "其他"], showColor: true },
+    M250:   { materialOpts: ["贵金属", "透光", "镭射", "钻石", "镭射贵金属", "其他"], showColor: true },
+    MP7:    { materialOpts: ["贵金属", "透光", "镭射", "水晶", "钻石", "镭射贵金属", "其他"], showColor: true },
+    SCARH:  { materialOpts: ["贵金属", "水晶", "其他"],                         showColor: true },
+    Vector: { materialOpts: [],                                                 showColor: false },
+    KC17:   { materialOpts: ["结构光", "镭射贵金属", "贵金属", "镭射", "其他"], showColor: true },
   };
 
   const metaById = window.SKIN_META || {};
@@ -264,7 +283,7 @@
     if (!colorCode) {
       colorLabel = "";
     } else if (colorCode === "1111") {
-      colorLabel = "未知配色";
+      colorLabel = "炫彩";
     } else {
       const color1 = colorMap[c1] || c1;
       const color2 = colorMap[c2] || c2;
@@ -289,12 +308,18 @@
 
   function decodeMaterialLabel(materialCode) {
     if (!materialCode) return "";
-    const labels = materialCode
-      .split("")
-      .map((code) => materialMap[code] || code)
-      .filter(Boolean);
-    if (labels.length > 2) return labels.slice(0, 2).join(" + ");
-    return labels.join(" + ");
+    const parts = [];
+    let i = 0;
+    while (i < materialCode.length) {
+      if (i + 1 < materialCode.length && materialMap[materialCode.slice(i, i + 2)]) {
+        parts.push(materialMap[materialCode.slice(i, i + 2)]);
+        i += 2;
+      } else {
+        parts.push(materialMap[materialCode[i]] || materialCode[i]);
+        i += 1;
+      }
+    }
+    return parts.slice(0, 2).join(" + ");
   }
 
   function normalizeLabel(rawLabel, fallback) {
@@ -345,6 +370,7 @@
       tutorialImages.innerHTML = "";
     }
     filterBar.classList.remove("hidden");
+    updateWeaponFilters(state.nav);
 
     const shown = skins.filter((s) => {
       if (state.nav !== "home" && s.weapon !== state.nav) return false;
@@ -591,6 +617,26 @@
       .join("");
   }
 
+  function updateWeaponFilters(weapon) {
+    const cfg = WEAPON_FILTER_CONFIG[weapon] || { materialOpts: [], showColor: true };
+
+    // 重建 materialFilter 选项，并把 state 与 DOM 强制对齐
+    const prevMat = state.material;
+    materialFilter.innerHTML = '<option value="">材质（全部）</option>' +
+      cfg.materialOpts.map((m) => `<option value="${m}">${m}</option>`).join("");
+    const validMat = cfg.materialOpts.includes(prevMat) ? prevMat : "";
+    state.material = validMat;
+    materialFilter.value = validMat;
+    materialFilter.style.display = cfg.materialOpts.length ? "" : "none";
+
+    // 颜色框显隐
+    colorFilter.style.display = cfg.showColor ? "" : "none";
+    if (!cfg.showColor) {
+      state.color = "";
+      colorFilter.value = "";
+    }
+  }
+
   function buildSideNav() {
     const coverWeapons = weaponCovers.filter((c) => c.enabled).map((c) => c.weapon);
     const dataWeapons = [...new Set(skins.map((s) => s.weapon).filter(Boolean))];
@@ -603,7 +649,14 @@
 
     sideNav.querySelectorAll(".nav-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
-        state.nav = btn.dataset.nav;
+        const newNav = btn.dataset.nav;
+        if (newNav !== state.nav) {
+          state.material = "";
+          state.color = "";
+          materialFilter.value = "";
+          colorFilter.value = "";
+        }
+        state.nav = newNav;
         setActiveNav(state.nav);
         location.hash = "";
         renderList();
