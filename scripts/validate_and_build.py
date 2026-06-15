@@ -594,7 +594,14 @@ def parse_asval_folder_core(folder_name: str) -> tuple[str, str, str, str]:
         raise ValueError(f"材质不合法: {folder_name}")
     material = "".join(material_chars)
     color_text = base_name[pos:]
-    # 剥离尾部纯数字流水后缀（如 UG白002 中的 002）
+
+    # 数字格式颜色码（如 0201、1111），可选后跟 3 位流水（如 0201001）
+    num_m = re.fullmatch(r"(\d{4})(\d{3})?", color_text)
+    if num_m:
+        code = num_m.group(1)
+        return quality, material, code, decode_color_code(code)
+
+    # 中文颜色字符格式（如 白红、炫彩），末尾 3 位纯数字为流水
     color_core = re.sub(r"\d+$", "", color_text)
     if not color_core:
         return quality, material, "1111", "未知配色"
