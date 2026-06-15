@@ -359,7 +359,8 @@
 
     // 颜色（按武器配置决定是否显示）
     if (showColor) {
-      h += '<div class="sp-section"><div class="sp-label">主色</div>';
+      var colorRequired = !isKC17(state.weapon) && wcfg.genCode;
+      h += '<div class="sp-section"><div class="sp-label">主色' + (colorRequired ? ' <span class="sp-req">必填</span>' : '') + '</div>';
       h += '<div class="sp-chips">' + chips(COLOR_OPTS, 'color1', state.color1) + '</div></div>';
       if (state.color1 && state.color1 !== '炫彩') {
         var c2opts = ['单色'].concat(COLOR_OPTS.filter(function (c) { return c !== state.color1 && c !== '炫彩'; }));
@@ -542,6 +543,12 @@
           var needMaterial = !isKC17(state.weapon) && getWeaponCfg(state.weapon).materialOpts.length > 0;
           if (needMaterial && !state.material) { toast('请选择材质'); return; }
           if (isKC17(state.weapon) && !state.material) { toast('请选择材质'); return; }
+          // 需要生成编码的武器：颜色也是必填（不选会产生 ???? 占位符导致目录名非法）
+          var wcfg = getWeaponCfg(state.weapon);
+          if (!isKC17(state.weapon) && wcfg.showColor && wcfg.genCode && !state.color1) {
+            toast('请选择主色');
+            return;
+          }
           render(2);
         });
       }
