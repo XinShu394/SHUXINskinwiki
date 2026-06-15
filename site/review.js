@@ -298,7 +298,10 @@
           '<div class="rp-folder-row">' +
             '<span class="rp-folder-lbl">目录名</span>' +
             '<input class="rp-folder-input" id="rpFolder' + sub.id + '" value="' + esc(suggested) + '" placeholder="如 UG0100 或 七彩雷" />' +
-            '<span class="rp-folder-tip">审核通过后在此目录存放图片</span>' +
+            (suggested.indexOf('?') !== -1
+              ? '<span class="rp-folder-tip rp-folder-warn">⚠ 颜色未选择，请手动补全颜色码（如将 ???? 改为 0105）再通过</span>'
+              : '<span class="rp-folder-tip">审核通过后在此目录存放图片</span>'
+            ) +
           '</div>'
         ) +
 
@@ -375,6 +378,7 @@
         var fi = body.querySelector('#rpFolder' + id);
         var fc = fi ? fi.value.trim() : '';
         if (!fc) { alert('请先填写目录名（如 UG0100）'); return; }
+        if (fc.indexOf('?') !== -1) { alert('目录名含有 "?"，说明颜色未选择，请先在投稿表单中选择颜色再审核，或手动修正目录名后再通过'); return; }
         doApprove(id, fc, btn);
       });
     });

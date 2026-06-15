@@ -1597,6 +1597,7 @@ body {
 .rp-folder-input:focus { outline: none; border-bottom-color: #50d0f0; }
 
 .rp-folder-tip { font-size: 11px; color: #3a5060; white-space: nowrap; }
+.rp-folder-tip.rp-folder-warn { color: #e07030; font-weight: 600; }
 
 /* 操作按钮 */
 .rp-actions {
