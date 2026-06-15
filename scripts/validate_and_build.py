@@ -17,7 +17,8 @@ CONFIG_DIR = ROOT / "scripts" / "config"
 OSS_BASE = "https://skinwiki.oss-cn-guangzhou.aliyuncs.com"
 
 QUALITY_LABEL = {"U": "优品", "J": "极品"}
-MATERIAL_LABEL = {"T": "透光", "G": "贵金属", "Q": "其他", "L": "镭射", "M": "漆面", "Z": "木质", "J": "结构光"}
+MATERIAL_LABEL = {"T": "透光", "G": "贵金属", "Q": "其他", "L": "镭射", "M": "漆面", "Z": "木质", "J": "结构光",
+                  "Y": "玉石", "D": "钻石", "C": "水晶"}
 COLOR_MAP = {
     "白": "01",
     "红": "02",
@@ -375,7 +376,7 @@ def parse_material_color_folder(rule: WeaponRule, folder_name: str) -> ParseResu
 def parse_material_color_core(name: str) -> tuple[str, str]:
     # 优先尝试数字编码格式：[UJ][材质{1,2}][4位颜色码][可选3位流水]
     # 兼容旧手工录入文件夹（如 UQ0802），与 K416 风格一致
-    numeric_match = re.fullmatch(r"([UJ])([TGQLMZ]{1,2})(\d{4})(\d{3})?", name)
+    numeric_match = re.fullmatch(r"([UJ])([TGQLMZYDC]{1,2})(\d{4})(\d{3})?", name)
     if numeric_match:
         quality = numeric_match.group(1)
         material_str = numeric_match.group(2)
@@ -414,7 +415,7 @@ def parse_material_color_core(name: str) -> tuple[str, str]:
 def parse_template_with_material_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
     base_name, annotation = split_folder_name(folder_name)
     # 优先尝试带材质码格式：[UJ][材质码{1,2}][模板名][可选流水]
-    m = re.fullmatch(r"([UJ])([TGQLMZ]{1,2})(.+?)(\d{3})?", base_name)
+    m = re.fullmatch(r"([UJ])([TGQLMZYDC]{1,2})(.+?)(\d{3})?", base_name)
     if m:
         quality = m.group(1)
         material = m.group(2)
