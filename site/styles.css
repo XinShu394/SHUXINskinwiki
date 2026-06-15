@@ -2012,7 +2012,7 @@ body {
   }
 }
 
-/* ── 手机侧边栏（< 768px）：收窄，隐藏公告和联系区 ── */
+/* ── 手机侧边栏（< 768px）：收窄，隐藏公告和联系文字，保留操作按钮 ── */
 @media (max-width: 768px) {
   .app {
     grid-template-columns: 108px 1fr;
@@ -2032,23 +2032,40 @@ body {
     text-overflow: ellipsis;
     max-width: 72px;
   }
-  .version-notice,
-  .brand-contact {
+  /* 隐藏版本公告 */
+  .version-notice {
     display: none;
+  }
+  /* 隐藏联系文字，只保留按钮，移到导航列表下方 */
+  .brand-contact {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    order: 10;
+  }
+  .brand-contact > p,
+  .brand-contact > a,
+  .brand-contact > span {
+    display: none;
+  }
+  .action-btns {
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 0;
+    border-top: 1px solid #1d303a;
+    padding-top: 8px;
+  }
+  .action-btn {
+    font-size: 11px;
+    padding: 7px 4px;
+    text-align: center;
   }
   .nav-btn {
     font-size: 12px;
     padding: 8px 7px;
     margin-bottom: 5px;
-  }
-  .action-btns {
-    flex-direction: column;
-    gap: 5px;
-    margin-top: 8px;
-  }
-  .action-btn {
-    font-size: 11px;
-    padding: 7px 4px;
   }
   .content {
     padding: 10px 8px;
