@@ -80,26 +80,29 @@ def validate_required_images_oss(
 ) -> dict[str, str]:
     """校验 OSS 上的图片，同时探测 .png / .jpg 两种扩展名。
     A 缺失 → error（阻断构建）；B/C/D 缺失 → warning（允许只有 1 张图的投稿通过）。
-    兼容 {skin_id}_{slot} 和 {slot} 两种文件名前缀。
-    返回 {slot: actual_ext} 字典，供 build_record 写入正确的图片 URL。
+    兼容 {skin_id}_{slot} 和 {slot} 两种文件名前缀（审核旧逻辑上传的 A.png 等无前缀文件）。
+    返回 {slot: actual_filename} 字典（含扩展名），供 build_record 写入正确的图片 URL。
     """
-    ext_map: dict[str, str] = {}
+    filename_map: dict[str, str] = {}
     for slot in ("A", "B", "C", "D"):
-        found_ext: str | None = None
+        found_filename: str | None = None
         for ext in (".png", ".jpg", ".jpeg"):
             standard_key = f"{weapon_dir}/{folder_code}/{skin_id}_{slot}{ext}"
             fallback_key  = f"{weapon_dir}/{folder_code}/{slot}{ext}"
-            if oss_image_exists(bucket, standard_key) or oss_image_exists(bucket, fallback_key):
-                found_ext = ext
+            if oss_image_exists(bucket, standard_key):
+                found_filename = f"{skin_id}_{slot}{ext}"
                 break
-        if found_ext:
-            ext_map[slot] = found_ext
+            elif oss_image_exists(bucket, fallback_key):
+                found_filename = f"{slot}{ext}"
+                break
+        if found_filename:
+            filename_map[slot] = found_filename
         else:
             if slot == "A":
                 errors.append(f"OSS 缺少主图: {weapon_dir}/{folder_code}/{skin_id}_A.png/jpg")
             else:
                 warnings.append(f"OSS 缺少副图（可选）: {weapon_dir}/{folder_code}/{skin_id}_{slot}.png/jpg")
-    return ext_map
+    return filename_map
 
 
 @dataclass
@@ -741,10 +744,15 @@ def _img_url(weapon: str, folder_code: str, filename: str) -> str:
 
 
 def build_record(result: ParseResult, image_exts: dict[str, str] | None = None) -> dict[str, Any]:
-    """构建皮肤记录。image_exts 为 OSS 模式下探测到的实际扩展名，如 {'A': '.jpg', 'B': '.png'}，
-    缺失时默认 .png。"""
-    def _ext(slot: str) -> str:
-        return (image_exts or {}).get(slot, ".png")
+    """构建皮肤记录。
+    image_exts 在 OSS 模式下由 validate_required_images_oss 返回，
+    格式为 {slot: actual_filename}（含扩展名），如 {'A': 'ASVAL-JY0201-001_A.png'} 或 {'A': 'A.png'}。
+    缺失时默认使用标准命名 {skin_id}_{slot}.png。
+    """
+    def _filename(slot: str) -> str:
+        if image_exts and slot in image_exts:
+            return image_exts[slot]
+        return f"{result.skin_id}_{slot}.png"
 
     record = {
         "id": result.skin_id,
@@ -752,10 +760,10 @@ def build_record(result: ParseResult, image_exts: dict[str, str] | None = None) 
         "normalizedCode": result.normalized_code,
         "weapon": result.weapon,
         "serial": result.serial,
-        "imageA": _img_url(result.weapon, result.folder_code, f"{result.skin_id}_A{_ext('A')}"),
-        "imageB": _img_url(result.weapon, result.folder_code, f"{result.skin_id}_B{_ext('B')}"),
-        "imageC": _img_url(result.weapon, result.folder_code, f"{result.skin_id}_C{_ext('C')}"),
-        "imageD": _img_url(result.weapon, result.folder_code, f"{result.skin_id}_D{_ext('D')}"),
+        "imageA": _img_url(result.weapon, result.folder_code, _filename("A")),
+        "imageB": _img_url(result.weapon, result.folder_code, _filename("B")),
+        "imageC": _img_url(result.weapon, result.folder_code, _filename("C")),
+        "imageD": _img_url(result.weapon, result.folder_code, _filename("D")),
         "status": "ready",
     }
     if result.template:
