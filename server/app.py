@@ -886,7 +886,9 @@ def approve_submission(sub_id: int):
             effective_folder_code = (
                 f"{folder_code}__{sub_material or 'NA'}-{sub_quality or 'NA'}-{safe_name}"
             )
-    skin_id = _compute_skin_id(weapon, effective_folder_code) or ""
+    # 计算 skin_id 时只用原始 folderCode，避免 "__材质-品质-名称" 注解影响 parser
+    # 注解目录名仅用于 OSS 落盘与构建 name_hint，不应用于 ID 解析。
+    skin_id = _compute_skin_id(weapon, folder_code.split("__", 1)[0]) or ""
 
     if (row["storage_mode"] or "local") == "oss":
         try:
