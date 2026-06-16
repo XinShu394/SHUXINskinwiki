@@ -160,16 +160,15 @@ def _resolve_unique_skin_target(
     if not skin_id or weapon == "ASVAL":
         return base_folder_code, skin_id, False, ""
 
-    taken_ids = _read_existing_site_skin_ids(weapon) | _read_approved_skin_ids_from_db(conn, weapon)
-    if skin_id not in taken_ids:
-        return base_folder_code, skin_id, False, ""
-
     rule, parsed = _parse_folder_for_weapon(weapon, base_folder_code)
     if not rule or not parsed:
-        return "", "", False, f"检测到 skin_id 重复（{skin_id}），且目录码无法自动补流水，请手动调整后再审核"
+        return "", "", False, "目录码无法解析，无法按固定起始号分配 serial，请手动调整后再审核"
+
+    taken_ids = _read_existing_site_skin_ids(weapon) | _read_approved_skin_ids_from_db(conn, weapon)
 
     folder_core = _folder_core_for_serial(rule.mode, parsed, base_folder_code)
-    for n in range(2, 1000):
+    # 固定策略：未来新审核不再占用历史低号位，统一从 100 起分配。
+    for n in range(100, 1000):
         serial = f"{n:03d}"
         candidate_base = f"{folder_core}{serial}"
         candidate_id = _compute_skin_id(weapon, candidate_base) or ""
@@ -177,9 +176,10 @@ def _resolve_unique_skin_target(
             continue
         if candidate_id in taken_ids:
             continue
-        return candidate_base, candidate_id, True, ""
+        adjusted = (candidate_base != base_folder_code) or (candidate_id != skin_id)
+        return candidate_base, candidate_id, adjusted, ""
 
-    return "", "", False, f"检测到 skin_id 重复（{skin_id}），自动补流水失败（已尝试到 999）"
+    return "", "", False, f"固定起始号 100 分配失败：{weapon} 下 100~999 序号已占满"
 
 
 # ── 频率限制 ──────────────────────────────────────────────
