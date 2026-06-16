@@ -888,7 +888,15 @@ def approve_submission(sub_id: int):
             )
     # 计算 skin_id 时只用原始 folderCode，避免 "__材质-品质-名称" 注解影响 parser
     # 注解目录名仅用于 OSS 落盘与构建 name_hint，不应用于 ID 解析。
-    skin_id = _compute_skin_id(weapon, folder_code.split("__", 1)[0]) or ""
+    base_folder_code = folder_code.split("__", 1)[0]
+    skin_id = _compute_skin_id(weapon, base_folder_code) or ""
+    # ASVAL 串号依赖全量目录排序，允许为空并沿用 slot 文件名兜底。
+    # 其它武器若解析失败，直接阻断审核，避免出现 approved_skin_id 空值和后续心得无法关联。
+    if not skin_id and weapon != "ASVAL":
+        conn.close()
+        return jsonify({
+            "error": "folderCode 无法解析为 skin_id，请使用该武器规范目录码（可点“目录名建议”或参考已有目录）"
+        }), 400
 
     if (row["storage_mode"] or "local") == "oss":
         try:

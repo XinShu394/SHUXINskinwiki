@@ -47,7 +47,7 @@
 
   let _skinStats = null; // null = 未加载，{} = 已加载
   let _skinNotes = null; // null = 未加载，{} = 已加载
-  const NO_NOTES_TEXT = "暂无投稿心得";
+  const NO_NOTES_TEXT = "";
 
   const LS_LIKED_KEY = "skin_liked_ids";
 
