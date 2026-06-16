@@ -68,6 +68,120 @@ def _compute_skin_id(weapon: str, folder_code: str) -> str | None:
         return None
 
 
+def _parse_folder_for_weapon(weapon: str, folder_code: str):
+    """返回 (rule, parsed)；ASVAL/解析失败时返回 (None, None)。"""
+    import sys as _sys
+    _scripts = str(ROOT / "scripts")
+    if _scripts not in _sys.path:
+        _sys.path.insert(0, _scripts)
+    try:
+        from validate_and_build import load_weapon_rules, parse_folder  # type: ignore
+        _config = ROOT / "scripts" / "config" / "weapon_rules.json"
+        rules = load_weapon_rules(_config)
+        rule = next((r for r in rules if r.weapon == weapon), None)
+        if not rule or rule.mode == "asval":
+            return None, None
+        parsed = parse_folder(rule, folder_code)
+        return rule, parsed
+    except Exception:
+        return None, None
+
+
+def _read_existing_site_skin_ids(weapon: str) -> set[str]:
+    """读取 site/data/{weapon}.js 中已存在的 skin_id 集合。"""
+    data_path = ROOT / "site" / "data" / f"{weapon}.js"
+    if not data_path.exists():
+        return set()
+    try:
+        text = data_path.read_text(encoding="utf-8").strip()
+        left = text.find("[")
+        right = text.rfind("]")
+        if left < 0 or right < 0 or right <= left:
+            return set()
+        rows = json.loads(text[left : right + 1])
+        out = set()
+        for row in rows:
+            skin_id = (row or {}).get("id", "")
+            if isinstance(skin_id, str) and skin_id.strip():
+                out.add(skin_id.strip())
+        return out
+    except Exception:
+        return set()
+
+
+def _read_approved_skin_ids_from_db(conn: sqlite3.Connection, weapon: str) -> set[str]:
+    """读取 submissions 中该武器已审核通过且已写回的 approved_skin_id。"""
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(submissions)").fetchall()}
+    if "approved_skin_id" not in cols:
+        return set()
+    rows = conn.execute(
+        """
+        SELECT approved_skin_id
+        FROM submissions
+        WHERE status='approved'
+          AND weapon=?
+          AND approved_skin_id IS NOT NULL
+          AND TRIM(approved_skin_id)!=''
+        """,
+        (weapon,),
+    ).fetchall()
+    return {(r["approved_skin_id"] or "").strip() for r in rows if (r["approved_skin_id"] or "").strip()}
+
+
+def _folder_core_for_serial(rule_mode: str, parsed, base_folder_code: str) -> str:
+    """根据武器模式提取“可拼接流水号”的目录核心。"""
+    numeric_modes = {"k416", "qbz95", "tenglong", "material_color"}
+    if rule_mode in numeric_modes:
+        # 这几类目录核心为 normalized_code，天然不带流水。
+        return parsed.normalized_code
+    # 其余模式仅在明确存在流水号时移除末尾 3 位。
+    if parsed.serial != "001" and re.search(r"\d{3}$", base_folder_code):
+        return base_folder_code[:-3]
+    return base_folder_code
+
+
+def _resolve_unique_skin_target(
+    conn: sqlite3.Connection,
+    weapon: str,
+    raw_folder_code: str,
+) -> tuple[str, str, bool, str]:
+    """
+    解析并返回唯一目标：
+    - final_base_folder_code: 最终用于解析 skin_id 的目录码（不含 __ 注解）
+    - final_skin_id:          与目录码一致的唯一 skin_id
+    - serial_adjusted:        是否发生了自动补流水
+    - err:                    失败原因（空字符串代表成功）
+    """
+    base_folder_code = (raw_folder_code or "").split("__", 1)[0].strip()
+    if not base_folder_code:
+        return "", "", False, "folderCode 不能为空"
+
+    skin_id = _compute_skin_id(weapon, base_folder_code) or ""
+    if not skin_id or weapon == "ASVAL":
+        return base_folder_code, skin_id, False, ""
+
+    taken_ids = _read_existing_site_skin_ids(weapon) | _read_approved_skin_ids_from_db(conn, weapon)
+    if skin_id not in taken_ids:
+        return base_folder_code, skin_id, False, ""
+
+    rule, parsed = _parse_folder_for_weapon(weapon, base_folder_code)
+    if not rule or not parsed:
+        return "", "", False, f"检测到 skin_id 重复（{skin_id}），且目录码无法自动补流水，请手动调整后再审核"
+
+    folder_core = _folder_core_for_serial(rule.mode, parsed, base_folder_code)
+    for n in range(2, 1000):
+        serial = f"{n:03d}"
+        candidate_base = f"{folder_core}{serial}"
+        candidate_id = _compute_skin_id(weapon, candidate_base) or ""
+        if not candidate_id:
+            continue
+        if candidate_id in taken_ids:
+            continue
+        return candidate_base, candidate_id, True, ""
+
+    return "", "", False, f"检测到 skin_id 重复（{skin_id}），自动补流水失败（已尝试到 999）"
+
+
 # ── 频率限制 ──────────────────────────────────────────────
 _rate:        dict = {}   # 评论用：ip -> [ts, ...]
 _submit_rate: dict = {}   # 投稿用：ip -> [ts, ...]
@@ -874,29 +988,41 @@ def approve_submission(sub_id: int):
     weapon     = row["weapon"]
     weapon_dir = get_weapon_dir(weapon)
 
+    # 审核并发下需要先拿写锁，避免两个审核同时分配到同一 serial。
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+    except sqlite3.OperationalError:
+        conn.close()
+        return jsonify({"error": "审核通道忙，请稍后重试"}), 409
+
+    # 先按“基础目录码（不含 __ 注解）”解析并做去重，避免同编号导致后续构建覆盖。
+    final_base_folder_code, skin_id, serial_adjusted, resolve_err = _resolve_unique_skin_target(conn, weapon, folder_code)
+    if not final_base_folder_code:
+        conn.rollback()
+        conn.close()
+        return jsonify({"error": resolve_err or "folderCode 不能为空"}), 400
+
+    # ASVAL 串号依赖全量目录排序，允许为空并沿用 slot 文件名兜底。
+    # 其它武器若解析失败，直接阻断审核，避免出现 approved_skin_id 空值和后续心得无法关联。
+    if not skin_id and weapon != "ASVAL":
+        conn.rollback()
+        conn.close()
+        return jsonify({
+            "error": "folderCode 无法解析为 skin_id，请使用该武器规范目录码（可点“目录名建议”或参考已有目录）"
+        }), 400
+
     # 将投稿人填写的皮肤名编码进文件夹名（__ 注解格式），供构建脚本读取 name_hint
     # 格式：{folderCode}__{material}-{quality}-{skinName}，仅当 skin_name 存在且 folderCode 不含 __ 时追加
     sub_skin_name = (row["skin_name"] if "skin_name" in cols else "") or ""
     sub_quality   = (row["quality"]   if "quality"   in cols else "") or ""
     sub_material  = (row["material"]  if "material"  in cols else "") or ""
-    effective_folder_code = folder_code
-    if sub_skin_name and "__" not in folder_code:
+    effective_folder_code = final_base_folder_code
+    if sub_skin_name:
         safe_name = re.sub(r'[/\\|]', '_', sub_skin_name.strip())
         if safe_name:
             effective_folder_code = (
-                f"{folder_code}__{sub_material or 'NA'}-{sub_quality or 'NA'}-{safe_name}"
+                f"{final_base_folder_code}__{sub_material or 'NA'}-{sub_quality or 'NA'}-{safe_name}"
             )
-    # 计算 skin_id 时只用原始 folderCode，避免 "__材质-品质-名称" 注解影响 parser
-    # 注解目录名仅用于 OSS 落盘与构建 name_hint，不应用于 ID 解析。
-    base_folder_code = folder_code.split("__", 1)[0]
-    skin_id = _compute_skin_id(weapon, base_folder_code) or ""
-    # ASVAL 串号依赖全量目录排序，允许为空并沿用 slot 文件名兜底。
-    # 其它武器若解析失败，直接阻断审核，避免出现 approved_skin_id 空值和后续心得无法关联。
-    if not skin_id and weapon != "ASVAL":
-        conn.close()
-        return jsonify({
-            "error": "folderCode 无法解析为 skin_id，请使用该武器规范目录码（可点“目录名建议”或参考已有目录）"
-        }), 400
 
     if (row["storage_mode"] or "local") == "oss":
         try:
@@ -931,10 +1057,11 @@ def approve_submission(sub_id: int):
                     )
                     supp_n += 1
         except Exception as e:
+            conn.rollback()
             conn.close()
             return jsonify({"error": f"复制 OSS 图片失败：{e}"}), 500
     else:
-        target_dir = ROOT / weapon_dir / folder_code
+        target_dir = ROOT / weapon_dir / effective_folder_code
         target_dir.mkdir(parents=True, exist_ok=True)
         for slot in ("A", "B", "C", "D"):
             src_path = row[slot_field(slot, "file")]
@@ -945,13 +1072,34 @@ def approve_submission(sub_id: int):
                 shutil.copy2(str(src), str(target_dir / src.name))
 
     now = int(time.time() * 1000)
-    conn.execute(
-        """UPDATE submissions
-           SET status='approved', reviewed_at=?, review_note=?, build_status='queued', build_error='',
-               approved_skin_id=?
-           WHERE id=?""",
-        (now, "", skin_id, sub_id),
-    )
+    if skin_id:
+        cur = conn.execute(
+            """
+            UPDATE submissions
+               SET status='approved', reviewed_at=?, review_note=?, build_status='queued', build_error='',
+                   approved_skin_id=?
+             WHERE id=?
+               AND NOT EXISTS (
+                   SELECT 1 FROM submissions
+                    WHERE id<>?
+                      AND status='approved'
+                      AND approved_skin_id=?
+               )
+            """,
+            (now, "", skin_id, sub_id, sub_id, skin_id),
+        )
+        if cur.rowcount != 1:
+            conn.rollback()
+            conn.close()
+            return jsonify({"error": f"skin_id 冲突：{skin_id}，请重试审核"}), 409
+    else:
+        conn.execute(
+            """UPDATE submissions
+               SET status='approved', reviewed_at=?, review_note=?, build_status='queued', build_error='',
+                   approved_skin_id=?
+               WHERE id=?""",
+            (now, "", skin_id, sub_id),
+        )
     conn.commit()
     conn.close()
     job_id = enqueue_build_job(weapon)
@@ -959,6 +1107,9 @@ def approve_submission(sub_id: int):
         "ok": True,
         "buildQueued": True,
         "buildJobId": job_id,
+        "finalFolderCode": final_base_folder_code,
+        "finalSkinId": skin_id,
+        "serialAdjusted": serial_adjusted,
         "message": "审核通过，构建已入队（异步执行）",
     })
 
