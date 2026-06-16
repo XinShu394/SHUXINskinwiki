@@ -202,6 +202,7 @@ def init_db():
     ensure_column(conn, "submissions", "oss_etag_s1", "oss_etag_s1 TEXT")
     ensure_column(conn, "submissions", "oss_etag_s2", "oss_etag_s2 TEXT")
     ensure_column(conn, "submissions", "oss_etag_s3", "oss_etag_s3 TEXT")
+    ensure_column(conn, "submissions", "approved_skin_id", "approved_skin_id TEXT")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS supplement_images (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -225,6 +226,7 @@ def init_db():
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_submissions_status ON submissions(status)")
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_submissions_query_token ON submissions(query_token)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_submissions_approved_skin_id ON submissions(approved_skin_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_build_jobs_status ON build_jobs(status)")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS skin_likes (
@@ -304,6 +306,7 @@ def sub_to_dict(r) -> dict:
         "hasS1":                bool(r["oss_key_s1"] if "oss_key_s1" in cols else None),
         "hasS2":                bool(r["oss_key_s2"] if "oss_key_s2" in cols else None),
         "hasS3":                bool(r["oss_key_s3"] if "oss_key_s3" in cols else None),
+        "approvedSkinId":       r["approved_skin_id"] if "approved_skin_id" in cols else "",
     }
 
 def get_weapon_dir(weapon: str) -> str:
@@ -522,6 +525,37 @@ def get_skin_stats():
         result.setdefault(r["skin_id"], {})["likes"] = r["count"]
     for r in comment_rows:
         result.setdefault(r["skin_id"], {})["comments"] = r["cnt"]
+    return jsonify(result)
+
+
+@app.route("/api/skin-notes", methods=["GET"])
+def get_skin_notes():
+    """返回已审核通过的心得映射：{skin_id: {notes, contributor}}"""
+    conn = get_db()
+    rows = conn.execute(
+        """
+        SELECT approved_skin_id, notes, contributor, reviewed_at
+        FROM submissions
+        WHERE status='approved'
+          AND submission_type='new_skin'
+          AND approved_skin_id IS NOT NULL
+          AND TRIM(approved_skin_id)!=''
+          AND notes IS NOT NULL
+          AND TRIM(notes)!=''
+        ORDER BY reviewed_at DESC, id DESC
+        """
+    ).fetchall()
+    conn.close()
+
+    result = {}
+    for r in rows:
+        skin_id = (r["approved_skin_id"] or "").strip()
+        if not skin_id or skin_id in result:
+            continue
+        result[skin_id] = {
+            "notes": (r["notes"] or "").strip(),
+            "contributor": (r["contributor"] or "").strip() or "匿名",
+        }
     return jsonify(result)
 
 
@@ -852,11 +886,11 @@ def approve_submission(sub_id: int):
             effective_folder_code = (
                 f"{folder_code}__{sub_material or 'NA'}-{sub_quality or 'NA'}-{safe_name}"
             )
+    skin_id = _compute_skin_id(weapon, effective_folder_code) or ""
 
     if (row["storage_mode"] or "local") == "oss":
         try:
             bucket = get_oss_bucket()
-            skin_id = _compute_skin_id(weapon, effective_folder_code)
             for slot in ("A", "B", "C", "D"):
                 src_key = row[slot_field(slot, "oss_key")]
                 if not src_key:
@@ -903,9 +937,10 @@ def approve_submission(sub_id: int):
     now = int(time.time() * 1000)
     conn.execute(
         """UPDATE submissions
-           SET status='approved', reviewed_at=?, review_note=?, build_status='queued', build_error=''
+           SET status='approved', reviewed_at=?, review_note=?, build_status='queued', build_error='',
+               approved_skin_id=?
            WHERE id=?""",
-        (now, "", sub_id),
+        (now, "", skin_id, sub_id),
     )
     conn.commit()
     conn.close()

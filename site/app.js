@@ -46,6 +46,8 @@
   const state = { query: "", nav: "home", quality: "", material: "", color: "", sort: "default" };
 
   let _skinStats = null; // null = 未加载，{} = 已加载
+  let _skinNotes = null; // null = 未加载，{} = 已加载
+  const NO_NOTES_TEXT = "暂无投稿心得";
 
   const LS_LIKED_KEY = "skin_liked_ids";
 
@@ -75,6 +77,27 @@
     } catch {
       _skinStats = {};
     }
+  }
+
+  async function ensureSkinNotes() {
+    if (_skinNotes !== null) return;
+    try {
+      const res = await fetch(API_BASE + "/skin-notes");
+      if (!res.ok) throw new Error("加载失败");
+      _skinNotes = await res.json();
+    } catch {
+      _skinNotes = {};
+    }
+  }
+
+  function getSkinNotes(skinId) {
+    return (_skinNotes && _skinNotes[skinId]) || null;
+  }
+
+  function formatNotesText(noteInfo) {
+    if (!noteInfo || !noteInfo.notes) return NO_NOTES_TEXT;
+    const contributor = noteInfo.contributor ? ` —— ${noteInfo.contributor}` : "";
+    return `“${noteInfo.notes}”${contributor}`;
   }
 
   function getSkinLikes(skinId) {
@@ -394,12 +417,14 @@
         (s) => {
           const likeCount = getSkinLikes(s.id);
           const liked = isLiked(s.id);
+          const noteInfo = getSkinNotes(s.id);
+          const cardSubText = noteInfo && noteInfo.notes ? `“${noteInfo.notes}”` : NO_NOTES_TEXT;
           return `
       <article class="card" data-id="${escapeHtml(s.id)}">
         <img src="${safeEncodeURI(s.imageA)}" alt="${escapeHtml(s.id)} A图" />
         <div class="card-body">
           <div class="card-id">${escapeHtml(s.name)}</div>
-          <div class="card-name">${escapeHtml(s.id)}</div>
+          <div class="card-name">${escapeHtml(cardSubText)}</div>
           <div class="tags">
             ${renderTags(s)}
           </div>
@@ -412,6 +437,12 @@
         }
       )
       .join("");
+
+    if (_skinNotes === null) {
+      ensureSkinNotes().then(() => {
+        if (!location.hash && state.nav !== "home") renderList();
+      });
+    }
 
     listView.querySelectorAll(".card").forEach((card) => {
       card.addEventListener("click", (e) => {
@@ -439,7 +470,9 @@
     filterBar.classList.add("hidden");
 
     document.getElementById("detailName").textContent = s.name;
-    document.getElementById("detailId").textContent = s.id;
+    const detailIdEl = document.getElementById("detailId");
+    const noteInfo = getSkinNotes(s.id);
+    detailIdEl.textContent = formatNotesText(noteInfo);
     document.getElementById("imgB").src = safeEncodeURI(s.imageB);
     document.getElementById("imgC").src = safeEncodeURI(s.imageC);
     document.getElementById("imgD").src = safeEncodeURI(s.imageD);
@@ -478,6 +511,14 @@
     if (window.Comments) window.Comments.load(s.id);
 
     loadSupplement(s);
+
+    if (_skinNotes === null) {
+      ensureSkinNotes().then(() => {
+        const latest = getSkinNotes(s.id);
+        const el = document.getElementById("detailId");
+        if (el) el.textContent = formatNotesText(latest);
+      });
+    }
   }
 
   // ── 玩家共享图 ────────────────────────────────────────────
@@ -796,4 +837,5 @@
   });
 
   checkDevServer();
+  ensureSkinNotes();
 })();
