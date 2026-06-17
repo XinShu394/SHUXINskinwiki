@@ -265,6 +265,12 @@
   }
 
   // ── 查重过滤 ─────────────────────────────────────────────
+  function isXuancaiSkin(skin) {
+    var code = String((skin && skin.normalizedCode) || '');
+    var label = String((skin && skin.colorLabel) || '');
+    return /1111$/.test(code) || label === '炫彩' || label === '未知配色';
+  }
+
   function matchingSkinsInDB() {
     var all = global.SKIN_DATA || [];
     return all.filter(function (s) {
@@ -272,8 +278,12 @@
       if (state.quality  && s.qualityLabel  !== state.quality)  return false;
       if (state.material && s.materialLabel !== state.material) return false;
       if (state.color1) {
-        // colorLabel 格式："白色" / "白色 + 红色"，state.color1 = "白"
-        if (!s.colorLabel || s.colorLabel.indexOf(state.color1) === -1) return false;
+        if (state.color1 === '炫彩') {
+          if (!isXuancaiSkin(s)) return false;
+        } else {
+          // colorLabel 格式："白色" / "白色 + 红色"，state.color1 = "白"
+          if (!s.colorLabel || s.colorLabel.indexOf(state.color1) === -1) return false;
+        }
       }
       return true;
     });

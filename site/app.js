@@ -347,6 +347,8 @@
 
   function normalizeLabel(rawLabel, fallback) {
     if (!rawLabel || rawLabel === "NA") return fallback;
+    // 历史构建数据中 1111 常落为“未知配色”，展示层统一为“炫彩”
+    if (rawLabel === "未知配色" && fallback === "炫彩") return "炫彩";
     return qualityMap[rawLabel] || materialMap[rawLabel] || rawLabel;
   }
 
