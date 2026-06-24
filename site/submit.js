@@ -145,7 +145,7 @@
         });
       }
     }
-    render(1);
+    render(0);
     if (panelEl) panelEl.classList.remove('hidden');
   }
 
@@ -292,9 +292,10 @@
   // ── 渲染 ────────────────────────────────────────────────
   function stepHeader(active) {
     var steps = [
-      { n: '①', label: '筛选' },
-      { n: '②', label: '查重' },
-      { n: '③', label: '上传' }
+      { n: '①', label: '推荐' },
+      { n: '②', label: '筛选' },
+      { n: '③', label: '查重' },
+      { n: '④', label: '上传' }
     ];
     var h = '<div class="sp-steps">';
     steps.forEach(function (s, i) {
@@ -310,7 +311,8 @@
     if (!panelEl) return;
     state.step = step;
     var html;
-    if (step === 1)      html = buildStep1();
+    if (step === 0)      html = buildStep0();
+    else if (step === 1) html = buildStep1();
     else if (step === 2) html = buildStep2();
     else                 html = buildStep3();
     panelEl.innerHTML = html;
@@ -322,6 +324,35 @@
       return '<button class="sp-chip' + (current === o ? ' active' : '') +
              '" data-type="' + type + '" data-val="' + esc(o) + '">' + esc(o) + '</button>';
     }).join('');
+  }
+
+  // ── Step 0：投稿推荐 ──────────────────────────────────────
+  function buildStep0() {
+    var base = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? '/site/guide/' : '/guide/';
+    var h = '<div class="sp-inner"><div class="sp-head">';
+    h += stepHeader(0);
+    h += '<span class="sp-title">投稿推荐</span>';
+    h += '<button class="sp-close" id="spClose">×</button></div>';
+    h += '<div class="sp-body">';
+
+    h += '<div class="sp-guide-block">';
+    h += '<img class="sp-guide-img" src="' + base + '\u6295\u7a3f\u63a8\u8350\u56fe.png" alt="\u63a8\u8350\u653e\u56fe\u793a\u4f8b" />';
+    h += '<p class="sp-guide-desc">';
+    h += '\u4e0a\u4f20\u65b0\u6a21\u677f\u9996\u6b21\u4e0a\u4f20\u53ef\u4ee5\u4e0a\u4f204\u20137\u5f20\u56fe\u7247\uff0c\u63a8\u8350\u56fe\u5982\u4e0a\uff0c\u5927\u5bb6\u5c3d\u91cf\u5c55\u793a\u5e38\u7528\u7684\u914d\u4ef6\uff5e\u611f\u8c22';
+    h += '</p></div>';
+
+    h += '<div class="sp-guide-block">';
+    h += '<img class="sp-guide-img" src="' + base + '\u6750\u8d28\u786e\u8ba4\u56fe.png" alt="\u6750\u8d28\u786e\u8ba4\u8def\u5f84" />';
+    h += '<p class="sp-guide-desc">';
+    h += '\u4e0a\u4f20\u524d\u8bf7\u786e\u8ba4\u6750\u8d28\u548c\u989c\u8272\u4e3a\u5b98\u65b9\u989c\u8272\uff0c\u786e\u8ba4\u8def\u5f84\uff1a\u5e02\u573a \u2014 \u552e\u5356 \u2014 \u76f8\u4f3c\u76ae\u80a4';
+    h += '</p></div>';
+
+    h += '<div class="sp-footer">';
+    h += '<button class="sp-btn-primary" id="spStart">\u5f00\u59cb\u6295\u7a3f \u2192</button>';
+    h += '</div>';
+    h += '</div></div>';
+    return h;
   }
 
   // ── Step 1：筛选 ──────────────────────────────────────────
@@ -544,7 +575,11 @@
       });
     });
 
-    if (step === 1) {
+    if (step === 0) {
+      var startBtn = panelEl.querySelector('#spStart');
+      if (startBtn) startBtn.addEventListener('click', function () { render(1); });
+
+    } else if (step === 1) {
       var nextBtn = panelEl.querySelector('#spNext');
       if (nextBtn) {
         nextBtn.addEventListener('click', function () {

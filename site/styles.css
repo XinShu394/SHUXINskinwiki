@@ -2177,3 +2177,24 @@ body {
     font-size: 16px;
   }
 }
+
+/* ── 投稿推荐步骤 (Step 0) ──────────────────────────────── */
+.sp-guide-block {
+  margin-bottom: 20px;
+}
+.sp-guide-block:last-of-type {
+  margin-bottom: 0;
+}
+.sp-guide-img {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #1d3a48;
+  margin-bottom: 8px;
+}
+.sp-guide-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #8ab8cc;
+}
