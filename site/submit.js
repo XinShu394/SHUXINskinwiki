@@ -300,7 +300,7 @@
     var h = '<div class="sp-steps">';
     steps.forEach(function (s, i) {
       if (i > 0) h += '<span class="sp-step-sep">›</span>';
-      var cls = 'sp-step' + (i + 1 === active ? ' sp-step-active' : '');
+      var cls = 'sp-step' + (i === active ? ' sp-step-active' : '');
       h += '<span class="' + cls + '">' + s.n + ' ' + s.label + '</span>';
     });
     h += '</div>';
