@@ -38,6 +38,7 @@
     SCARH:  { materialOpts: ["贵金属", "水晶", "其他"],                         showColor: true },
     Vector: { materialOpts: [],                                                 showColor: false },
     KC17:   { materialOpts: ["结构光", "镭射贵金属", "贵金属", "镭射", "其他"], showColor: true },
+    AKM:    { materialOpts: ["星河光", "镭射贵金属", "贵金属", "大理石", "镭射大理石", "镭射", "其他"], showColor: true },
   };
 
   const metaById = window.SKIN_META || {};

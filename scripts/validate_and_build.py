@@ -20,6 +20,7 @@ QUALITY_LABEL = {"U": "优品", "J": "极品"}
 MATERIAL_LABEL = {"T": "透光", "G": "贵金属", "Q": "其他", "L": "镭射", "M": "漆面", "Z": "木质", "J": "结构光",
                   "Y": "玉石", "D": "钻石", "C": "水晶"}
 AKM_MATERIAL_LABEL = {"X": "星河光", "G": "贵金属", "L": "镭射", "Q": "其他", "R": "大理石"}
+AKM_MATERIAL_PAIRS = {"LG": "镭射贵金属", "LR": "镭射大理石"}
 COLOR_MAP = {
     "白": "01",
     "红": "02",
@@ -258,7 +259,7 @@ def parse_k416_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
 def parse_akm_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
     """AKM 编码格式与 K416 一致，但材质文案采用 AKM 专属映射。"""
     base_name, annotation = split_folder_name(folder_name)
-    m = re.fullmatch(r"([UJ][XGLQR]{1,2}\d{4})(\d{3})?", base_name)
+    m = re.fullmatch(r"([UJ][XGLQR]{1,3}\d{4})(\d{3})?", base_name)
     if not m:
         raise ValueError(f"目录不符合编码模式: {folder_name}")
     normalized_code = m.group(1)
@@ -571,9 +572,21 @@ def decode_material(material_code: str) -> str:
 
 
 def decode_akm_material(material_code: str) -> str:
+    """优先匹配两字符对（LG/LR），再按单字符解码，支持最多 3 码组合（如 XLG）。"""
     if not material_code:
         return ""
-    return " + ".join(AKM_MATERIAL_LABEL.get(c, MATERIAL_LABEL.get(c, c)) for c in material_code)
+    parts: list[str] = []
+    i = 0
+    while i < len(material_code):
+        two = material_code[i:i+2]
+        if two in AKM_MATERIAL_PAIRS:
+            parts.append(AKM_MATERIAL_PAIRS[two])
+            i += 2
+        else:
+            c = material_code[i]
+            parts.append(AKM_MATERIAL_LABEL.get(c, MATERIAL_LABEL.get(c, c)))
+            i += 1
+    return " + ".join(parts)
 
 
 def decode_color_code(color_code: str) -> str:
