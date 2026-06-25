@@ -16,6 +16,11 @@
     '贵金属': 'G', '透光': 'T', '镭射': 'L', '漆面': 'M', '木质': 'Z', '其他': 'Q',
     '玉石': 'Y', '钻石': 'D', '水晶': 'C', '镭射贵金属': 'LG'
   };
+  // AKM 专属材质编码（X=星河光, R=大理石，复合码 LG/LR 与通用一致）
+  var AKM_MATERIAL_CODES = {
+    '星河光': 'X', '贵金属': 'G', '镭射': 'L', '其他': 'Q',
+    '大理石': 'R', '镭射贵金属': 'LG', '镭射大理石': 'LR'
+  };
   var COLOR_CODES    = {
     '白': '01', '红': '02', '黄': '03', '青': '04', '紫': '05', '棕': '06',
     '黑': '07', '灰': '08', '橙': '09', '绿': '10', '蓝': '11', '粉': '12', '炫彩': '1111'
@@ -109,8 +114,8 @@
       return q + mCode + (sub.skinName || '');
     }
 
-    // 通用逻辑：支持双材质
-    var mCode = matToCode(sub.material, null);
+    // 通用逻辑：支持双材质（AKM 使用专属映射）
+    var mCode = matToCode(sub.material, sub.weapon === 'AKM' ? AKM_MATERIAL_CODES : null);
 
     // 模板武器（AUG/SCARH/Vector/M4A1）：无颜色码，用皮肤名
     // Vector/M4A1 无材质，mCode 为空时直接用 q+skinName
