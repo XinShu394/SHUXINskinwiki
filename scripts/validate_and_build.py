@@ -19,6 +19,7 @@ OSS_BASE = "https://skinwiki.oss-cn-guangzhou.aliyuncs.com"
 QUALITY_LABEL = {"U": "优品", "J": "极品"}
 MATERIAL_LABEL = {"T": "透光", "G": "贵金属", "Q": "其他", "L": "镭射", "M": "漆面", "Z": "木质", "J": "结构光",
                   "Y": "玉石", "D": "钻石", "C": "水晶"}
+AKM_MATERIAL_LABEL = {"X": "星河光", "G": "贵金属", "L": "镭射", "Q": "其他", "R": "大理石"}
 COLOR_MAP = {
     "白": "01",
     "红": "02",
@@ -248,6 +249,34 @@ def parse_k416_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
         template="",
         quality_label=QUALITY_LABEL.get(quality, ""),
         material_label=decode_material(material),
+        color_label=decode_color_code(color_code),
+        canonical_folder_code=canonical_folder,
+        name_hint=annotation.get("skinName", ""),
+    )
+
+
+def parse_akm_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
+    """AKM 编码格式与 K416 一致，但材质文案采用 AKM 专属映射。"""
+    base_name, annotation = split_folder_name(folder_name)
+    m = re.fullmatch(r"([UJ][XGLQR]{1,2}\d{4})(\d{3})?", base_name)
+    if not m:
+        raise ValueError(f"目录不符合编码模式: {folder_name}")
+    normalized_code = m.group(1)
+    serial = m.group(2) or "001"
+    skin_id = f"{rule.weapon}-{normalized_code}-{serial}"
+    quality = normalized_code[0]
+    material = normalized_code[1:-4]
+    color_code = normalized_code[-4:]
+    canonical_folder = normalized_code if serial == "001" else f"{normalized_code}{serial}"
+    return ParseResult(
+        skin_id=skin_id,
+        folder_code=folder_name,
+        normalized_code=normalized_code,
+        weapon=rule.weapon,
+        serial=serial,
+        template="",
+        quality_label=QUALITY_LABEL.get(quality, ""),
+        material_label=decode_akm_material(material),
         color_label=decode_color_code(color_code),
         canonical_folder_code=canonical_folder,
         name_hint=annotation.get("skinName", ""),
@@ -541,6 +570,12 @@ def decode_material(material_code: str) -> str:
     return " + ".join(MATERIAL_LABEL.get(c, c) for c in material_code)
 
 
+def decode_akm_material(material_code: str) -> str:
+    if not material_code:
+        return ""
+    return " + ".join(AKM_MATERIAL_LABEL.get(c, MATERIAL_LABEL.get(c, c)) for c in material_code)
+
+
 def decode_color_code(color_code: str) -> str:
     if not re.fullmatch(r"\d{4}", color_code):
         return ""
@@ -704,6 +739,8 @@ def parse_asval_all_folders_oss(bucket, rule: WeaponRule) -> dict[str, ParseResu
 def parse_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
     if rule.mode == "k416":
         return parse_k416_folder(rule, folder_name)
+    if rule.mode == "akm":
+        return parse_akm_folder(rule, folder_name)
     if rule.mode == "qbz95":
         return parse_qbz95_folder(rule, folder_name)
     if rule.mode == "tenglong":

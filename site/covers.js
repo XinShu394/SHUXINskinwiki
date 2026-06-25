@@ -12,6 +12,12 @@ window.WEAPON_COVERS = [
     "enabled": true
   },
   {
+    "weapon": "AKM",
+    "title": "AKM-群星",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/%E6%9E%AA%E7%9A%AE%E6%80%BB%E5%B0%81%E9%9D%A2/AKM-%E7%BE%A4%E6%98%9F.png",
+    "enabled": true
+  },
+  {
     "weapon": "K416",
     "title": "K416-命运王牌",
     "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/K416-命运王牌.png",

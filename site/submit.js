@@ -47,6 +47,12 @@
       dualEligible:  ['贵金属', '透光'],
       showColor: true, genCode: true
     },
+    'AKM': {
+      materialOpts:  ['星河光', '镭射贵金属', '贵金属', '大理石', '镭射大理石', '镭射', '其他'],
+      materialCodes: { '星河光': 'X', '镭射贵金属': 'LG', '贵金属': 'G', '大理石': 'R', '镭射大理石': 'LR', '镭射': 'L', '其他': 'Q' },
+      dualEligible:  ['星河光', '贵金属', '大理石', '镭射'],
+      showColor: true, genCode: true
+    },
     'QBZ95': {
       materialOpts:  ['贵金属', '其他'],
       materialCodes: { '贵金属': 'G', '其他': 'Q' },

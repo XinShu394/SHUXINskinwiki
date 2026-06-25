@@ -27,6 +27,11 @@
       "mode": "template_with_material"
     },
     {
+      "weapon": "AKM",
+      "dir": "AKM",
+      "mode": "akm"
+    },
+    {
       "weapon": "KC17",
       "dir": "KC17",
       "mode": "kc17"
