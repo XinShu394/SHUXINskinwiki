@@ -2,6 +2,7 @@
 // 本文件在 HTML 中最后加载，将所有子数组合并为 window.SKIN_DATA。
 (function () {
   window.SKIN_DATA = [].concat(
+    window._SKIN_DATA_AKM    || [],
     window._SKIN_DATA_ASVAL  || [],
     window._SKIN_DATA_AUG    || [],
     window._SKIN_DATA_K416   || [],

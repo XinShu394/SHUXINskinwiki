@@ -1051,8 +1051,8 @@ def main() -> int:
     for cover in existing_covers:
         weapon = cover.get("weapon", "")
         new_cover = dict(cover)
-        if weapon in ready_counts:
-            new_cover["enabled"] = ready_counts[weapon] > 0
+        if weapon in ready_counts and ready_counts[weapon] > 0:
+            new_cover["enabled"] = True
         covers.append(new_cover)
 
     if not args.dry_run:
