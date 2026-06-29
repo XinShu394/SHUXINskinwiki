@@ -1,0 +1,13 @@
+# systemd 定时器 —— 每天 03:00 触发数据库备份
+# 与 zpbk-backup.service 配套使用
+
+[Unit]
+Description=砖皮百科 数据库每日备份定时器
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+Unit=zpbk-backup.service
+
+[Install]
+WantedBy=timers.target

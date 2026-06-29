@@ -1,0 +1,23 @@
+# systemd 服务文件 —— 数据库备份（由 zpbk-backup.timer 触发）
+# 使用方法（ECS 上部署时执行）：
+#   sudo cp zpbk-backup.service /etc/systemd/system/
+#   sudo cp zpbk-backup.timer   /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now zpbk-backup.timer
+#
+# 手动触发一次验证：
+#   sudo systemctl start zpbk-backup.service
+#   sudo journalctl -u zpbk-backup.service -n 30 --no-pager
+
+[Unit]
+Description=砖皮百科 数据库每日备份
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/var/www/zpbk/server
+ExecStart=/var/www/zpbk/server/venv/bin/python /var/www/zpbk/server/backup_db.py
+User=www-data
+EnvironmentFile=/etc/zpbk.env
+StandardOutput=journal
+StandardError=journal
