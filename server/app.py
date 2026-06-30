@@ -189,7 +189,7 @@ _submit_rate: dict = {}   # 投稿用：ip -> [ts, ...]
 RATE_WINDOW   = 60
 RATE_LIMIT    = 5
 SUBMIT_WINDOW = 86400
-SUBMIT_LIMIT  = 10
+SUBMIT_LIMIT  = 999
 
 def _is_limited(store: dict, ip: str, window: int, limit: int) -> bool:
     now = time.time()
