@@ -50,41 +50,47 @@ STS_AK_ID = os.environ.get("ALIYUN_STS_ACCESS_KEY_ID", "")
 STS_AK_SECRET = os.environ.get("ALIYUN_STS_ACCESS_KEY_SECRET", "")
 
 # ── parse 辅助（approve 时计算 skin_id，避免命名不一致）──────
-def _compute_skin_id(weapon: str, folder_code: str) -> str | None:
-    """从 weapon + folder_code 推导 skin_id。"""
+def _ensure_scripts_path():
     import sys as _sys
     _scripts = str(ROOT / "scripts")
     if _scripts not in _sys.path:
         _sys.path.insert(0, _scripts)
+
+
+def _try_parse_folder(weapon: str, folder_code: str):
+    """返回 (rule, parsed, error_msg)。失败时 parsed 为 None，error_msg 含原因。"""
+    _ensure_scripts_path()
     try:
         from validate_and_build import load_weapon_rules, parse_folder  # type: ignore
         _config = ROOT / "scripts" / "config" / "weapon_rules.json"
+        if not _config.exists():
+            return None, None, f"缺少配置文件: {_config}"
         rules = load_weapon_rules(_config)
         rule = next((r for r in rules if r.weapon == weapon), None)
         if not rule:
-            return None
-        return parse_folder(rule, folder_code).skin_id
-    except Exception:
-        return None
+            return None, None, f"weapon_rules.json 中未配置武器 {weapon!r}"
+        parsed = parse_folder(rule, folder_code)
+        return rule, parsed, ""
+    except Exception as exc:
+        logger.warning(
+            "parse_folder failed weapon=%s folder=%r: %s",
+            weapon,
+            folder_code,
+            exc,
+        )
+        return None, None, str(exc)
+
+
+def _compute_skin_id(weapon: str, folder_code: str) -> str | None:
+    """从 weapon + folder_code 推导 skin_id。"""
+    _rule, parsed, _err = _try_parse_folder(weapon, folder_code)
+    return parsed.skin_id if parsed else None
 
 
 def _parse_folder_for_weapon(weapon: str, folder_code: str):
     """返回 (rule, parsed)；解析失败时返回 (None, None)。"""
-    import sys as _sys
-    _scripts = str(ROOT / "scripts")
-    if _scripts not in _sys.path:
-        _sys.path.insert(0, _scripts)
-    try:
-        from validate_and_build import load_weapon_rules, parse_folder  # type: ignore
-        _config = ROOT / "scripts" / "config" / "weapon_rules.json"
-        rules = load_weapon_rules(_config)
-        rule = next((r for r in rules if r.weapon == weapon), None)
-        if not rule:
-            return None, None
-        parsed = parse_folder(rule, folder_code)
-        return rule, parsed
-    except Exception:
-        return None, None
+    rule, parsed, _err = _try_parse_folder(weapon, folder_code)
+    return rule, parsed
 
 
 def _read_existing_site_skin_ids(weapon: str) -> set[str]:
@@ -156,13 +162,16 @@ def _resolve_unique_skin_target(
     if not base_folder_code:
         return "", "", False, "folderCode 不能为空"
 
-    skin_id = _compute_skin_id(weapon, base_folder_code) or ""
+    rule, parsed, parse_err = _try_parse_folder(weapon, base_folder_code)
+    skin_id = parsed.skin_id if parsed else ""
     if not skin_id:
-        return base_folder_code, skin_id, False, ""
+        detail = parse_err or "未知解析错误"
+        return "", "", False, (
+            f"目录码 {base_folder_code!r} 无法解析为 skin_id：{detail}"
+        )
 
-    rule, parsed = _parse_folder_for_weapon(weapon, base_folder_code)
-    if not rule or not parsed:
-        return "", "", False, "目录码无法解析，无法按固定起始号分配 serial，请手动调整后再审核"
+    if not rule:
+        return "", "", False, f"weapon_rules.json 中未配置武器 {weapon!r}"
 
     taken_ids = _read_existing_site_skin_ids(weapon) | _read_approved_skin_ids_from_db(conn, weapon)
 
@@ -1006,7 +1015,10 @@ def approve_submission(sub_id: int):
         conn.rollback()
         conn.close()
         return jsonify({
-            "error": "folderCode 无法解析为 skin_id，请使用该武器规范目录码（可点“目录名建议”或参考已有目录）"
+            "error": resolve_err or (
+                "folderCode 无法解析为 skin_id，请使用该武器规范目录码"
+                "（可点“目录名建议”或参考已有目录）"
+            )
         }), 400
 
     # 将投稿人填写的皮肤名编码进文件夹名（__ 注解格式），供构建脚本读取 name_hint
