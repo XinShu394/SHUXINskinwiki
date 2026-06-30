@@ -51,7 +51,7 @@ STS_AK_SECRET = os.environ.get("ALIYUN_STS_ACCESS_KEY_SECRET", "")
 
 # ── parse 辅助（approve 时计算 skin_id，避免命名不一致）──────
 def _compute_skin_id(weapon: str, folder_code: str) -> str | None:
-    """从 weapon + folder_code 推导 skin_id。ASVAL 序号依赖全量目录，返回 None（用 slot.png 兜底）。"""
+    """从 weapon + folder_code 推导 skin_id。"""
     import sys as _sys
     _scripts = str(ROOT / "scripts")
     if _scripts not in _sys.path:
@@ -61,7 +61,7 @@ def _compute_skin_id(weapon: str, folder_code: str) -> str | None:
         _config = ROOT / "scripts" / "config" / "weapon_rules.json"
         rules = load_weapon_rules(_config)
         rule = next((r for r in rules if r.weapon == weapon), None)
-        if not rule or rule.mode == "asval":
+        if not rule:
             return None
         return parse_folder(rule, folder_code).skin_id
     except Exception:
@@ -69,7 +69,7 @@ def _compute_skin_id(weapon: str, folder_code: str) -> str | None:
 
 
 def _parse_folder_for_weapon(weapon: str, folder_code: str):
-    """返回 (rule, parsed)；ASVAL/解析失败时返回 (None, None)。"""
+    """返回 (rule, parsed)；解析失败时返回 (None, None)。"""
     import sys as _sys
     _scripts = str(ROOT / "scripts")
     if _scripts not in _sys.path:
@@ -79,7 +79,7 @@ def _parse_folder_for_weapon(weapon: str, folder_code: str):
         _config = ROOT / "scripts" / "config" / "weapon_rules.json"
         rules = load_weapon_rules(_config)
         rule = next((r for r in rules if r.weapon == weapon), None)
-        if not rule or rule.mode == "asval":
+        if not rule:
             return None, None
         parsed = parse_folder(rule, folder_code)
         return rule, parsed
@@ -157,7 +157,7 @@ def _resolve_unique_skin_target(
         return "", "", False, "folderCode 不能为空"
 
     skin_id = _compute_skin_id(weapon, base_folder_code) or ""
-    if not skin_id or weapon == "ASVAL":
+    if not skin_id:
         return base_folder_code, skin_id, False, ""
 
     rule, parsed = _parse_folder_for_weapon(weapon, base_folder_code)
@@ -1002,9 +1002,7 @@ def approve_submission(sub_id: int):
         conn.close()
         return jsonify({"error": resolve_err or "folderCode 不能为空"}), 400
 
-    # ASVAL 串号依赖全量目录排序，允许为空并沿用 slot 文件名兜底。
-    # 其它武器若解析失败，直接阻断审核，避免出现 approved_skin_id 空值和后续心得无法关联。
-    if not skin_id and weapon != "ASVAL":
+    if not skin_id:
         conn.rollback()
         conn.close()
         return jsonify({
