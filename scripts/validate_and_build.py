@@ -665,6 +665,84 @@ def parse_asval_folder_core(folder_name: str) -> tuple[str, str, str, str]:
     raise ValueError(f"颜色无法解析: {folder_name!r}")
 
 
+def parse_asval_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
+    """单目录解析（审核 approve 用）。批量构建仍走 parse_asval_all_folders。"""
+    base_name, annotation = split_folder_name(folder_name)
+    quality, material, color_code, color_label = parse_asval_folder_core(folder_name)
+    normalized_code = f"{quality}{material}{color_code}"
+
+    serial = "001"
+    pos = 1
+    mat_len = 0
+    while pos < len(base_name) and base_name[pos] in MATERIAL_LABEL and mat_len < 2:
+        mat_len += 1
+        pos += 1
+    color_text = base_name[pos:]
+
+    num_m = re.fullmatch(r"(\d{4})(\d{3})?", color_text)
+    if num_m:
+        if num_m.group(2):
+            serial = num_m.group(2)
+    else:
+        trail = re.search(r"(\d{3})$", base_name)
+        if trail:
+            serial = trail.group(1)
+
+    skin_id = f"{rule.weapon}-{normalized_code}-{serial}"
+    canonical_folder = normalized_code if serial == "001" else f"{normalized_code}{serial}"
+    return ParseResult(
+        skin_id=skin_id,
+        folder_code=folder_name,
+        normalized_code=normalized_code,
+        weapon=rule.weapon,
+        serial=serial,
+        template="",
+        quality_label=QUALITY_LABEL.get(quality, ""),
+        material_label=decode_material(material),
+        color_label=color_label,
+        canonical_folder_code=canonical_folder,
+        name_hint=annotation.get("skinName", ""),
+    )
+
+
+def _build_asval_group_results(
+    rule: WeaponRule,
+    groups: dict[str, list[tuple[str, str, str, str, str]]],
+) -> dict[str, ParseResult]:
+    """按 normalizedCode 分组分配 serial。
+    - 目录名含 serial>=100（审核自动补号，如 UZ0108100）→ 沿用 parse_asval_folder 结果；
+    - 其余 legacy 中文/旧目录 → 组内排序后从 001 起枚举（与历史 OSS 一致）。
+    """
+    result: dict[str, ParseResult] = {}
+    for _normalized_code, items in groups.items():
+        legacy: list[tuple[str, str, str, str, str]] = []
+        for folder_name, quality, material, color_code, color_label in sorted(items, key=lambda x: x[0]):
+            explicit = parse_asval_folder(rule, folder_name)
+            if int(explicit.serial) >= 100:
+                result[folder_name] = explicit
+            else:
+                legacy.append((folder_name, quality, material, color_code, color_label))
+        for idx, (folder_name, quality, material, color_code, color_label) in enumerate(legacy, start=1):
+            serial = f"{idx:03d}"
+            skin_id = f"{rule.weapon}-{_normalized_code}-{serial}"
+            canonical_folder = _normalized_code if serial == "001" else f"{_normalized_code}{serial}"
+            _, annotation = split_folder_name(folder_name)
+            result[folder_name] = ParseResult(
+                skin_id=skin_id,
+                folder_code=folder_name,
+                normalized_code=_normalized_code,
+                weapon=rule.weapon,
+                serial=serial,
+                template="",
+                quality_label=QUALITY_LABEL.get(quality, ""),
+                material_label=decode_material(material),
+                color_label=color_label,
+                canonical_folder_code=canonical_folder,
+                name_hint=annotation.get("skinName", ""),
+            )
+    return result
+
+
 def parse_asval_all_folders(rule: WeaponRule, weapon_dir: Path) -> dict[str, ParseResult]:
     """两阶段串号：先解析所有文件夹，按 normalizedCode 分组排序后分配 serial。
     返回 {folder_name: ParseResult}。"""
@@ -686,27 +764,7 @@ def parse_asval_all_folders(rule: WeaponRule, weapon_dir: Path) -> dict[str, Par
     if errors:
         raise ValueError("\n".join(errors))
 
-    result: dict[str, ParseResult] = {}
-    for normalized_code, items in groups.items():
-        for idx, (folder_name, quality, material, color_code, color_label) in enumerate(items, start=1):
-            serial = f"{idx:03d}"
-            skin_id = f"{rule.weapon}-{normalized_code}-{serial}"
-            canonical_folder = normalized_code if serial == "001" else f"{normalized_code}{serial}"
-            _, annotation = split_folder_name(folder_name)
-            result[folder_name] = ParseResult(
-                skin_id=skin_id,
-                folder_code=folder_name,
-                normalized_code=normalized_code,
-                weapon=rule.weapon,
-                serial=serial,
-                template="",
-                quality_label=QUALITY_LABEL.get(quality, ""),
-                material_label=decode_material(material),
-                color_label=color_label,
-                canonical_folder_code=canonical_folder,
-                name_hint=annotation.get("skinName", ""),
-            )
-    return result
+    return _build_asval_group_results(rule, groups)
 
 
 def parse_asval_all_folders_oss(bucket, rule: WeaponRule) -> dict[str, ParseResult]:
@@ -726,27 +784,7 @@ def parse_asval_all_folders_oss(bucket, rule: WeaponRule) -> dict[str, ParseResu
     if errors_local:
         raise ValueError("\n".join(errors_local))
 
-    result: dict[str, ParseResult] = {}
-    for normalized_code, items in groups.items():
-        for idx, (folder_name, quality, material, color_code, color_label) in enumerate(items, start=1):
-            serial = f"{idx:03d}"
-            skin_id = f"{rule.weapon}-{normalized_code}-{serial}"
-            canonical_folder = normalized_code if serial == "001" else f"{normalized_code}{serial}"
-            _, annotation = split_folder_name(folder_name)
-            result[folder_name] = ParseResult(
-                skin_id=skin_id,
-                folder_code=folder_name,
-                normalized_code=normalized_code,
-                weapon=rule.weapon,
-                serial=serial,
-                template="",
-                quality_label=QUALITY_LABEL.get(quality, ""),
-                material_label=decode_material(material),
-                color_label=color_label,
-                canonical_folder_code=canonical_folder,
-                name_hint=annotation.get("skinName", ""),
-            )
-    return result
+    return _build_asval_group_results(rule, groups)
 
 
 def parse_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
@@ -767,7 +805,7 @@ def parse_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
     if rule.mode == "pure_template":
         return parse_pure_template_folder(rule, folder_name)
     if rule.mode == "asval":
-        raise NotImplementedError("ASVAL 使用 parse_asval_all_folders，不走单文件夹解析")
+        return parse_asval_folder(rule, folder_name)
     raise ValueError(f"不支持的 mode: {rule.mode}")
 
 
