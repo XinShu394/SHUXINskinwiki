@@ -165,6 +165,10 @@ def _resolve_unique_skin_target(
     rule, parsed, parse_err = _try_parse_folder(weapon, base_folder_code)
     skin_id = parsed.skin_id if parsed else ""
     if not skin_id:
+        if weapon == "ASVAL":
+            # ASVAL 串号依赖全量目录排序，单目录解析失败时允许 approved_skin_id 为空兜底，
+            # 不阻断审核。解析成功时会正常走下方 serial 分配循环（从 100 起），与历史号段不重叠。
+            return base_folder_code, "", False, ""
         detail = parse_err or "未知解析错误"
         return "", "", False, (
             f"目录码 {base_folder_code!r} 无法解析为 skin_id：{detail}"
@@ -1011,7 +1015,7 @@ def approve_submission(sub_id: int):
         conn.close()
         return jsonify({"error": resolve_err or "folderCode 不能为空"}), 400
 
-    if not skin_id:
+    if not skin_id and weapon != "ASVAL":
         conn.rollback()
         conn.close()
         return jsonify({
