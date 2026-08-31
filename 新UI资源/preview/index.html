@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>砖皮百科 · 新 UI 预览</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="preview.css" />
+</head>
+<body>
+  <section class="view active" id="view-entry">
+    <header class="chrome">
+      <span class="kicker brand">ZPBK</span>
+      <span class="kicker">V1 Preview</span>
+    </header>
+    <div class="entry-stage" id="entryStage">
+      <button class="focus" id="focusGallery" type="button">
+        <svg viewBox="0 0 88 88" aria-hidden="true">
+          <path d="M8 58h44l18-8 10 4M8 58l8-22h28l10 22M20 36V22h22v8M52 50h18" />
+          <circle cx="22" cy="64" r="6" />
+          <circle cx="48" cy="64" r="6" />
+        </svg>
+        <h1 class="display">图鉴</h1>
+        <p>浏览已收录枪皮。按枪种进入，筛选、对比真实皮肤图。</p>
+      </button>
+      <button class="focus" id="focusUpload" type="button">
+        <svg viewBox="0 0 88 88" aria-hidden="true">
+          <path d="M44 70V22M44 22L30 36M44 22l14 14" />
+          <path d="M18 58v12h52V58" />
+        </svg>
+        <h1 class="display">上传</h1>
+        <p>投稿新模板、查看待审进度，或进入审核。</p>
+      </button>
+    </div>
+    <footer class="entry-foot">
+      <span></span>
+      <span class="meta">三角洲色板 · Loop 编排</span>
+    </footer>
+  </section>
+
+  <section class="view" id="view-pick">
+    <header class="chrome">
+      <button type="button" data-home>首页</button>
+      <span class="kicker">Catalog</span>
+    </header>
+    <div class="page">
+      <div class="page-head">
+        <div class="kicker">Select</div>
+        <h1 class="display display-lg">选择枪械</h1>
+      </div>
+      <div class="cover-grid" id="coverGrid"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-gallery">
+    <div class="gallery-shell">
+      <aside class="rail">
+        <button class="text-btn" type="button" data-home>首页</button>
+        <nav class="rail-list" id="railList"></nav>
+      </aside>
+      <div class="gallery-main">
+        <div class="gallery-hero">
+          <div class="gallery-title">
+            <div class="kicker">Archive</div>
+            <h1 class="display-weapon" id="gunTitle"></h1>
+          </div>
+        </div>
+        <div class="filters">
+          <div class="filter-stack">
+            <div class="filter-row" id="qualityTabs">
+              <span class="filter-lab">品质</span>
+              <div class="filter-opts">
+                <button type="button" class="chip on" data-v="">全部</button>
+                <button type="button" class="chip" data-v="优品">优品</button>
+                <button type="button" class="chip" data-v="极品">极品</button>
+              </div>
+            </div>
+            <div class="filter-row" id="materialRow" hidden>
+              <span class="filter-lab">材质</span>
+              <div class="filter-opts" id="materialTabs"></div>
+            </div>
+            <div class="filter-row" id="colorRow" hidden>
+              <span class="filter-lab">颜色</span>
+              <div class="filter-opts" id="colorTabs"></div>
+            </div>
+          </div>
+          <div class="filter-tools">
+            <input id="qInput" type="search" placeholder="搜索名称 / 编号" />
+            <div class="sort-tabs">
+              <button class="text-btn on" id="sortDefault" type="button">默认</button>
+              <button class="text-btn" id="sortHot" type="button">最热</button>
+            </div>
+          </div>
+        </div>
+        <div class="skin-grid" id="skinGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-detail">
+    <header class="chrome">
+      <button type="button" data-home>首页</button>
+      <button type="button" id="backGallery">返回图鉴</button>
+    </header>
+    <div class="page detail-page" id="detailPage"></div>
+  </section>
+
+  <section class="view" id="view-hub">
+    <header class="chrome">
+      <button type="button" data-home>首页</button>
+      <span class="kicker">Contribute</span>
+    </header>
+    <div class="page-center">
+      <div class="page-head">
+        <div class="kicker">Upload</div>
+        <h1 class="display display-lg">上传</h1>
+      </div>
+      <div class="hub-list">
+        <button class="hub-item" id="hubSubmit" type="button">
+          <span class="display">上传新模板</span>
+          <p>按现站四步投稿：构图、筛选、查重、上传。</p>
+        </button>
+        <button class="hub-item" id="hubPending" type="button">
+          <span class="display">查看待审</span>
+          <p>公开只读。字段与审核列表相同，不能审批。</p>
+        </button>
+        <button class="hub-item" id="hubReview" type="button">
+          <span class="display">审批入口</span>
+          <p>密钥进入。通过、拒绝、目录名仅此页。</p>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-pending">
+    <header class="chrome">
+      <button type="button" data-home>首页</button>
+      <span class="kicker" id="pendKicker">Queue</span>
+    </header>
+    <div class="page-center">
+      <div class="page-head">
+        <div class="kicker">Pending</div>
+        <h1 class="display display-lg" id="pendTitle">待审进度</h1>
+      </div>
+      <div class="pend-list" id="pendList"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-submit">
+    <header class="chrome">
+      <button type="button" data-home>首页</button>
+      <span class="kicker">Submit</span>
+    </header>
+    <div class="legacy-wrap">
+      <div class="legacy-submit" id="legacySubmit"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-review">
+    <header class="chrome">
+      <button type="button" data-home>首页</button>
+      <span class="kicker">Admin</span>
+    </header>
+    <div class="page-center">
+      <div id="reviewLogin">
+        <div class="kicker">Key</div>
+        <h1 class="display display-lg">审批入口</h1>
+        <div class="login-box">
+          <p class="lede">预览不校验密钥。任意输入后进入带操作的待审列表。</p>
+          <input id="reviewToken" type="password" placeholder="审核密钥" />
+          <button class="text-btn go" id="reviewEnter" type="button">进入审核</button>
+        </div>
+      </div>
+      <div id="reviewListWrap" style="display:none">
+        <div class="kicker">Signed in</div>
+        <h1 class="display display-lg">待审投稿</h1>
+        <div class="pend-list" id="reviewPendList"></div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="site-dock" aria-label="Q群">
+    <p>Q群:765759268</p>
+    <p>大家加群一起玩</p>
+  </aside>
+
+  <script src="../../site/covers.js"></script>
+  <script src="../../site/data/AKM.js"></script>
+  <script src="../../site/data/ASVAL.js"></script>
+  <script src="../../site/data/AUG.js"></script>
+  <script src="../../site/data/K416.js"></script>
+  <script src="../../site/data/KC17.js"></script>
+  <script src="../../site/data/M250.js"></script>
+  <script src="../../site/data/M4A1.js"></script>
+  <script src="../../site/data/M7.js"></script>
+  <script src="../../site/data/MP7.js"></script>
+  <script src="../../site/data/QBZ95.js"></script>
+  <script src="../../site/data/SCARH.js"></script>
+  <script src="../../site/data/Vector.js"></script>
+  <script src="../../site/data/腾龙.js"></script>
+  <script src="../../site/data.js"></script>
+  <script src="../../site/meta.js"></script>
+  <script src="preview.js"></script>
+</body>
+</html>
