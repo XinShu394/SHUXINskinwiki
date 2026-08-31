@@ -333,17 +333,20 @@ body::before {
   gap: 12px 22px;
 }
 .filter-lab {
-  flex: 0 0 2.6em;
+  flex: 0 0 auto;
+  white-space: nowrap;
   font-family: var(--display);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.12em;
   color: var(--mute);
   padding-top: 1px;
 }
 .filter-opts {
   display: flex;
   flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
   gap: 6px 16px;
   align-items: center;
 }
@@ -786,14 +789,16 @@ body::before {
   }
   .filter-stack { gap: 2px; }
   .filter-row {
-    gap: 2px 8px;
-    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    align-items: flex-start;
   }
   .filter-lab {
-    flex-basis: 2em;
+    flex: 0 0 auto;
+    white-space: nowrap;
     font-size: 10px;
-    letter-spacing: 0.1em;
-    padding-top: 0;
+    letter-spacing: 0.08em;
+    padding-top: 3px;
   }
   .filter-opts { gap: 2px 8px; }
   .chip { font-size: 12px; letter-spacing: 0.04em; }
