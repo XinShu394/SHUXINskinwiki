@@ -690,6 +690,9 @@
 
   async function checkDevServer() {
     if (!devTools) return;
+    const local =
+      location.hostname === "localhost" || location.hostname === "127.0.0.1";
+    if (!local) return;
     try {
       const res = await fetch(`${DEV_API}/api/health`, { signal: AbortSignal.timeout(800) });
       if (res.ok) {
