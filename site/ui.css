@@ -174,16 +174,6 @@ body::before {
   transform: none;
   color: var(--body);
 }
-.entry-foot {
-  position: absolute;
-  left: var(--pad);
-  right: var(--pad);
-  bottom: 28px;
-  display: flex;
-  justify-content: flex-end;
-  z-index: 5;
-}
-
 .site-dock {
   position: fixed;
   left: 0;
