@@ -438,7 +438,8 @@
   }
 
   function renderSuppGallery(items, container) {
-    let h = '<div class="supp-grid">';
+    const n = items.length;
+    let h = '<div class="supp-grid' + (n > 1 ? " supp-carousel" : "") + '">';
     items.forEach((item) => {
       h += '<div class="supp-item" data-raw-url="' + escapeHtml(item.url) + '">';
       h += '<img class="supp-img" src="' + escapeHtml(safeEncodeURI(item.url)) + '" alt="补充图" loading="lazy" />';
@@ -448,10 +449,26 @@
       h += "</div>";
     });
     h += "</div>";
+    if (n > 1) {
+      h += '<div class="supp-pg-info"><span class="supp-pg-cur">1</span>/' + n + "</div>";
+    }
     container.innerHTML = h;
     container.querySelectorAll(".supp-item").forEach((card) => {
       card.addEventListener("click", () => openLightbox(card.dataset.rawUrl));
     });
+    const rail = container.querySelector(".supp-carousel");
+    const cur = container.querySelector(".supp-pg-cur");
+    if (rail && cur) {
+      rail.addEventListener(
+        "scroll",
+        () => {
+          const w = rail.clientWidth || 1;
+          const i = Math.round(rail.scrollLeft / w) + 1;
+          cur.textContent = String(Math.min(n, Math.max(1, i)));
+        },
+        { passive: true }
+      );
+    }
   }
 
   function bindPreview(imgId, src) {

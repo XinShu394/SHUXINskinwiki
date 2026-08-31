@@ -478,7 +478,7 @@ body::before {
   align-items: start;
 }
 .detail-imgs { grid-area: imgs; }
-.detail-layout .supp-gallery { grid-area: supp; }
+#view-detail #supplementGallery { grid-area: supp; }
 .detail-side-col { grid-area: info; }
 #commentSection { grid-area: comments; }
 .detail-imgs img {
@@ -858,11 +858,46 @@ body::before {
     grid-template-areas:
       "info"
       "imgs"
-      "comments"
-      "supp";
+      "supp"
+      "comments";
     gap: 14px;
   }
-  .detail-layout .supp-gallery { max-height: none; overflow: visible; }
+  #view-detail #supplementGallery {
+    grid-area: supp;
+    max-height: none;
+    overflow: visible;
+  }
+  .detail-layout .supp-grid {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .detail-layout .supp-item {
+    flex: 0 0 100%;
+    min-width: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  .detail-layout .supp-img {
+    width: 100%;
+    height: auto;
+    max-height: 32vh;
+    aspect-ratio: auto;
+    object-fit: contain;
+    mix-blend-mode: normal;
+  }
+  .detail-layout .supp-pg-info {
+    margin-top: 6px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--mute);
+    text-align: center;
+  }
   .detail-side-col .display { font-size: 22px; margin: 2px 0 8px; line-height: 1.15; }
   #detailId { font-size: 13px; margin: 4px 0 8px; }
   .detail-side-col h3 { margin: 10px 0 6px; }
