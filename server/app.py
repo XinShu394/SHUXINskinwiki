@@ -919,18 +919,50 @@ def get_upload_preview(sub_id: int, slot: str):
     return send_file(str(src))
 
 
+def sub_to_public_dict(r) -> dict:
+    d = sub_to_dict(r)
+    return {
+        "id": d["id"],
+        "status": d["status"],
+        "weapon": d["weapon"],
+        "skinName": d["skinName"],
+        "quality": d["quality"],
+        "material": d["material"],
+        "color1": d["color1"],
+        "color2": d["color2"],
+        "notes": d["notes"],
+        "contributor": d["contributor"],
+        "createdAt": d["createdAt"],
+        "submissionType": d["submissionType"],
+        "type": d["submissionType"],
+        "supplementSkinId": d["supplementSkinId"],
+        "hasA": d["hasA"],
+        "hasB": d["hasB"],
+        "hasC": d["hasC"],
+        "hasD": d["hasD"],
+    }
+
+
 @app.route("/api/submissions", methods=["GET"])
 def list_submissions():
-    if not check_token():
-        return jsonify({"error": "无权限"}), 401
     status = normalize_status(request.args.get("status", "pending_review"))
+    if check_token():
+        conn = get_db()
+        rows = conn.execute(
+            "SELECT * FROM submissions WHERE status = ? ORDER BY created_at DESC",
+            (status,),
+        ).fetchall()
+        conn.close()
+        return jsonify({"results": [sub_to_dict(r) for r in rows]})
+    if status != "pending_review":
+        return jsonify({"error": "无权限"}), 401
     conn = get_db()
     rows = conn.execute(
         "SELECT * FROM submissions WHERE status = ? ORDER BY created_at DESC",
         (status,),
     ).fetchall()
     conn.close()
-    return jsonify({"results": [sub_to_dict(r) for r in rows]})
+    return jsonify({"results": [sub_to_public_dict(r) for r in rows]})
 
 
 @app.route("/api/submissions/<int:sub_id>/approve", methods=["PUT"])

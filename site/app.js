@@ -79,6 +79,16 @@
     return document.getElementById(id);
   }
 
+  function formatPendingTime(v) {
+    if (v == null || v === "") return "";
+    const n = Number(v);
+    if (!Number.isFinite(n) || n <= 0) return String(v);
+    const d = new Date(n > 1e12 ? n : n * 1000);
+    if (Number.isNaN(d.getTime())) return String(v);
+    const pad = (x) => String(x).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
   function getLikedSet() {
     try {
       return new Set(JSON.parse(localStorage.getItem(LS_LIKED_KEY) || "[]"));
@@ -307,9 +317,8 @@
     $("coverGrid").innerHTML = cards
       .map(
         (c) => `<button class="cover" type="button" data-w="${escapeHtml(c.weapon)}">
-          <img src="${escapeHtml(safeEncodeURI(c.src))}" alt="${escapeHtml(c.title)}" />
+          <img src="${escapeHtml(safeEncodeURI(c.src))}" alt="${escapeHtml(c.weapon)}" />
           <div class="name">${escapeHtml(c.weapon)}</div>
-          <div class="sub meta">${escapeHtml(c.title)}</div>
         </button>`
       )
       .join("");
@@ -524,15 +533,16 @@
       }
       list.innerHTML = rows
         .map((p) => {
-          const isSupp = p.type === "supplement" || p.supplementSkinId;
+          const isSupp = p.submissionType === "supplement" || p.type === "supplement" || p.supplementSkinId;
           const title = isSupp
             ? `玩家共享图 · 为 ${escapeHtml(p.supplementSkinId || "")} 补充`
             : `${escapeHtml(p.weapon || "")} · ${escapeHtml(p.skinName || "")}`;
+          const when = formatPendingTime(p.createdAt);
           return `<article class="pend">
             <div>
               <h3 class="display display-md" style="font-size:28px;margin:8px 0 12px">${title}</h3>
               ${p.notes ? `<p class="notes">“${escapeHtml(p.notes)}”</p>` : ""}
-              <p class="meta">投稿人：${escapeHtml(p.contributor || "")}　${escapeHtml(p.createdAt || "")}</p>
+              <p class="meta">投稿人：${escapeHtml(p.contributor || "")}${when ? "　" + escapeHtml(when) : ""}</p>
             </div>
           </article>`;
         })

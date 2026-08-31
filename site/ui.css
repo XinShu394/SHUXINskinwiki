@@ -448,15 +448,15 @@ body::before {
   background: rgba(245, 248, 246, 0.08);
 }
 
-/* 详情独立页 */
+/* 详情：主图 | 补充图 | 名称与信息 */
 .detail-page {
-  max-width: 1100px;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
 }
 .detail-layout {
   display: grid;
-  grid-template-columns: 1.35fr 0.75fr;
-  gap: 48px;
+  grid-template-columns: minmax(0, 1.85fr) minmax(200px, 0.52fr) minmax(280px, 0.78fr);
+  gap: 28px 24px;
   align-items: start;
 }
 .detail-imgs img {
@@ -466,13 +466,17 @@ body::before {
   border-radius: 0;
   display: block;
 }
+.detail-imgs #imgB {
+  width: 100%;
+}
 .detail-sub {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-top: 12px;
 }
-.detail-page .display { margin: 12px 0 16px; }
+.detail-side-col { min-width: 0; }
+.detail-side-col .display { overflow-wrap: anywhere; margin: 12px 0 16px; }
 .detail-page .skin-tags { margin-bottom: 4px; }
 .detail-meta { margin-top: 20px; color: var(--body); font-size: 14px; }
 
@@ -704,6 +708,13 @@ body::before {
 
 .empty { color: var(--mute); margin-top: 40px; }
 
+@media (max-width: 1200px) {
+  .detail-layout {
+    grid-template-columns: minmax(0, 1.5fr) minmax(168px, 0.48fr) minmax(240px, 0.72fr);
+    gap: 20px 16px;
+  }
+}
+
 @media (max-width: 860px) {
   .entry-stage { flex-direction: column; align-items: flex-start; gap: 48px; }
   .gallery-shell { grid-template-columns: 1fr; }
@@ -722,6 +733,7 @@ body::before {
   .legacy-submit.is-step1 .sp-step1 { grid-template-columns: 1fr; }
   .legacy-submit.is-step1 .sp-body { overflow-y: auto; }
   .pend, .detail-layout { grid-template-columns: 1fr; }
+  .detail-layout .supp-gallery { max-height: none; }
   .sort-tabs { margin-left: 0; }
   .filter-lab { flex-basis: 100%; }
   .filter-tools { flex-direction: column; align-items: stretch; }
@@ -804,8 +816,12 @@ body::before {
   border: 0;
   border-radius: 0;
   padding: 0;
-  margin-top: 20px;
+  margin-top: 0;
+  min-width: 0;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
 }
+.detail-layout .supp-img { height: auto; aspect-ratio: 16 / 10; }
 .supp-gallery-title { color: var(--mute); font-family: var(--display); letter-spacing: 0.16em; }
 .supp-upload-btn {
   background: none;
