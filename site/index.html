@@ -1,216 +1,237 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>砖皮共建社区 V1.0.0</title>
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <div class="app">
-      <aside class="sidebar">
-        <div class="brand">
-          <img src="./delta-logo.png" alt="三角洲行动图标" />
-          <span>砖皮共建社区<em class="version-tag">V1.0.0</em></span>
-        </div>
-        <div class="version-notice">
-          <p class="version-notice-label">📢 版本公告</p>
-          <p class="version-notice-text">1.0版本发布，新模板投稿后凭审批号截图至Q群私聊群主获取QQ红包奖励，根据质量1-4R。欢迎投稿！</p>
-        </div>
-        <div class="brand-contact">
-          <p>📮 枪皮投稿 / 互动</p>
-          <a href="https://www.bilibili.com/video/BV1orKQ6ZEP3/" target="_blank">B站网站说明视频</a>
-          <a href="https://space.bilibili.com/396947445" target="_blank">UP 主页</a>
-          <span>Q群：765759268</span>
-          <span class="brand-contact-sub">刚刚起步小群，大家一起玩 👋</span>
-          <div class="action-btns">
-            <button id="submitBtn" class="action-btn submit-btn">我要投稿</button>
-            <button id="reviewBtn" class="action-btn review-btn">审核通道</button>
-          </div>
-        </div>
-        <nav id="sideNav">
-          <button class="nav-btn active" data-nav="home">首页</button>
-        </nav>
-
-        <div id="devTools" class="dev-tools hidden">
-          <div class="dev-tools-label">本地工具</div>
-          <select id="validateWeaponSelect" class="dev-select">
-            <option value="">全量（所有武器）</option>
-          </select>
-          <label class="dev-checkbox-row">
-            <input type="checkbox" id="validateNormalize" />
-            <span>同步规范目录名</span>
-          </label>
-          <button id="validateBtn" class="validate-btn">校验并更新</button>
-        </div>
-      </aside>
-
-      <main class="content">
-        <header class="topbar">
-          <h1 id="pageTitle">砖皮图鉴</h1>
-        </header>
-
-        <section id="homeGuide" class="home-guide">
-          <!-- 手机端顶部信息条：版本公告 + 投稿互动（桌面端隐藏，跟随首页显隐） -->
-          <div class="mobile-site-info">
-            <div class="mobile-vnotice">
-              <span>📢 版本公告</span>
-              <p>1.0版本发布，新模板投稿后凭审批号截图至Q群私聊群主获取QQ红包奖励，根据质量1-4R。欢迎投稿！</p>
-            </div>
-            <div class="mobile-contact">
-              <p>📮 枪皮投稿 / 互动</p>
-              <a href="https://www.bilibili.com/video/BV1orKQ6ZEP3/" target="_blank">B站网站说明视频</a>
-              <a href="https://space.bilibili.com/396947445" target="_blank">UP 主页</a>
-              <span>Q群：765759268</span>
-            </div>
-          </div>
-
-          <div class="home-guide-head">
-            <h2>焚诀 · 入场前四步</h2>
-            <p>先定预算，再筛模板，最后自己做决定。</p>
-          </div>
-          <ol class="home-guide-list">
-            <li>
-              先定预算。偶尔花钱可以，但量力而行；除非顶级，我一般不会直接冲 648。略微了解市场后定上限，后面不要再抬预算。
-            </li>
-            <li>
-              先看优S，按降序价格。先找你喜欢的模板，再看相似皮肤并全选，记住这个模板的关键标签。
-            </li>
-            <li>
-              自己筛选：价格 2050 到预算上限，其余按模板标签填写，成色不限；筛完后按成色升序，找到你能接受的成色阈值。
-            </li>
-            <li>
-              购买前尽量确认没有模板诈骗；购买后别被他人评价带节奏，自己喜欢才是最重要的。
-            </li>
-          </ol>
-          <p class="site-disclaimer">枪皮图片来源游戏内截图、UP本人枪皮截图、B站部分枪皮改装分享视频截图。本网站非盈利，共建砖皮购买透明化，如有侵权请联系UP删除。</p>
-        </section>
-
-        <section id="homeView" class="grid"></section>
-
-        <section id="tutorialPanel" class="tutorial-panel">
-          <h2>挑选注意事项</h2>
-          <div id="tutorialImages" class="tutorial-images"></div>
-        </section>
-
-        <section id="filterBar" class="filter-bar">
-          <div class="filter-group">
-            <select id="qualityFilter">
-              <option value="">品质（全部）</option>
-              <option value="优品">优品</option>
-              <option value="极品">极品</option>
-            </select>
-            <select id="materialFilter">
-              <option value="">材质（全部）</option>
-            </select>
-            <select id="colorFilter">
-              <option value="">颜色（全部）</option>
-              <option value="白色">白色</option>
-              <option value="红色">红色</option>
-              <option value="黄色">黄色</option>
-              <option value="青色">青色</option>
-              <option value="紫色">紫色</option>
-              <option value="棕色">棕色</option>
-              <option value="黑色">黑色</option>
-              <option value="灰色">灰色</option>
-              <option value="橙色">橙色</option>
-              <option value="绿色">绿色</option>
-              <option value="蓝色">蓝色</option>
-              <option value="粉色">粉色</option>
-              <option value="炫彩">炫彩</option>
-            </select>
-          </div>
-          <div class="search-row">
-            <div class="sort-group">
-              <button class="sort-btn active" data-sort="default">默认</button>
-              <button class="sort-btn" data-sort="hot">最热</button>
-            </div>
-            <input id="searchInput" type="text" placeholder="搜索编号/编码/名称/颜色..." />
-          </div>
-        </section>
-
-        <section id="listView" class="grid"></section>
-
-        <section id="detailView" class="detail hidden">
-          <div class="detail-head">
-            <button id="backBtn" class="back-btn">返回列表</button>
-            <div>
-              <h2 id="detailName">未命名</h2>
-              <p id="detailId"></p>
-            </div>
-          </div>
-
-          <div class="detail-main">
-            <div class="images">
-              <img id="imgB" alt="B 市场图" />
-              <div class="sub-images">
-                <img id="imgC" alt="C 室内图" />
-                <img id="imgD" alt="D 室外图" />
-              </div>
-            </div>
-
-            <div id="supplementGallery" class="supp-gallery">
-              <div class="supp-gallery-head">
-                <span class="supp-gallery-title">补充图</span>
-                <button id="suppUploadBtn" class="supp-upload-btn" title="上传补充图">＋</button>
-              </div>
-              <div id="suppGalleryContent" class="supp-gallery-content"></div>
-            </div>
-
-            <div class="detail-side">
-              <div class="meta">
-                <h3>皮肤信息<button id="detailLikeBtn" class="detail-like-btn" aria-pressed="false" title="点赞"><span class="like-icon">♥</span><span class="like-count"></span></button></h3>
-                <ul id="metaList"></ul>
-              </div>
-              <div id="commentSection" class="cm-section"></div>
-            </div>
-          </div>
-        </section>
-
-        <div id="validatePanel" class="validate-panel hidden" role="dialog" aria-modal="true">
-          <div class="validate-panel-inner">
-            <div class="validate-panel-head">
-              <span id="validatePanelTitle">校验中…</span>
-              <button id="validatePanelClose" class="validate-panel-close" aria-label="关闭">×</button>
-            </div>
-            <div id="validatePanelBody" class="validate-panel-body">
-              <div id="validateSpinner" class="validate-spinner"></div>
-            </div>
-          </div>
-        </div>
-
-        <div id="submitPanel" class="submit-panel hidden" role="dialog" aria-modal="true"></div>
-        <div id="reviewPanel" class="review-panel hidden" role="dialog" aria-modal="true"></div>
-        <div id="supplementPanel" class="submit-panel hidden" role="dialog" aria-modal="true"></div>
-
-        <div id="lightbox" class="lightbox hidden" role="dialog" aria-modal="true">
-          <button id="lightboxClose" class="lightbox-close" aria-label="关闭大图">×</button>
-          <img id="lightboxImage" alt="大图预览" />
-        </div>
-
-      </main>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>砖皮百科</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./ui.css" />
+</head>
+<body>
+  <section class="view active" id="view-entry">
+    <header class="chrome">
+      <span class="kicker brand">ZPBK</span>
+      <span class="kicker">砖皮百科</span>
+    </header>
+    <div class="entry-stage" id="entryStage">
+      <button class="focus" id="focusGallery" type="button">
+        <svg viewBox="0 0 88 88" aria-hidden="true">
+          <path d="M8 58h44l18-8 10 4M8 58l8-22h28l10 22M20 36V22h22v8M52 50h18" />
+          <circle cx="22" cy="64" r="6" />
+          <circle cx="48" cy="64" r="6" />
+        </svg>
+        <h1 class="display">图鉴</h1>
+        <p>浏览已收录枪皮。按枪种进入，筛选、对比真实皮肤图。</p>
+      </button>
+      <button class="focus" id="focusUpload" type="button">
+        <svg viewBox="0 0 88 88" aria-hidden="true">
+          <path d="M44 70V22M44 22L30 36M44 22l14 14" />
+          <path d="M18 58v12h52V58" />
+        </svg>
+        <h1 class="display">上传</h1>
+        <p>投稿新模板、查看待审进度，或进入审核。</p>
+      </button>
     </div>
+    <footer class="entry-foot">
+      <span></span>
+      <span class="meta">砖皮共建</span>
+    </footer>
+  </section>
 
-    <script src="./data/AKM.js"></script>
-    <script src="./data/ASVAL.js"></script>
-    <script src="./data/AUG.js"></script>
-    <script src="./data/K416.js"></script>
-    <script src="./data/KC17.js"></script>
-    <script src="./data/M250.js"></script>
-    <script src="./data/M4A1.js"></script>
-    <script src="./data/M7.js"></script>
-    <script src="./data/MP7.js"></script>
-    <script src="./data/QBZ95.js"></script>
-    <script src="./data/SCARH.js"></script>
-    <script src="./data/Vector.js"></script>
-    <script src="./data/腾龙.js"></script>
-    <script src="./data.js"></script>
-    <script src="./meta.js"></script>
-    <script src="./covers.js"></script>
-    <script src="./comments.js"></script>
-    <script src="./app.js"></script>
-    <script src="./submit.js"></script>
-    <script src="./review.js"></script>
-    <script src="./supplement.js"></script>
-  </body>
-  </html>
+  <section class="view" id="view-pick">
+    <header class="chrome">
+      <button type="button" data-home>首页</button>
+      <span class="kicker">Catalog</span>
+    </header>
+    <div class="page">
+      <div class="page-head">
+        <div class="kicker">Select</div>
+        <h1 class="display display-lg">选择枪械</h1>
+      </div>
+      <div class="cover-grid" id="coverGrid"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-gallery">
+    <div class="gallery-shell">
+      <aside class="rail">
+        <button class="text-btn" type="button" data-home>首页</button>
+        <nav class="rail-list" id="railList"></nav>
+      </aside>
+      <div class="gallery-main">
+        <div class="gallery-hero">
+          <div class="gallery-title">
+            <div class="kicker">Archive</div>
+            <h1 class="display-weapon" id="gunTitle"></h1>
+          </div>
+        </div>
+        <div class="filters">
+          <div class="filter-stack">
+            <div class="filter-row" id="qualityTabs">
+              <span class="filter-lab">品质</span>
+              <div class="filter-opts">
+                <button type="button" class="chip on" data-v="">全部</button>
+                <button type="button" class="chip" data-v="优品">优品</button>
+                <button type="button" class="chip" data-v="极品">极品</button>
+              </div>
+            </div>
+            <div class="filter-row" id="materialRow" hidden>
+              <span class="filter-lab">材质</span>
+              <div class="filter-opts" id="materialTabs"></div>
+            </div>
+            <div class="filter-row" id="colorRow" hidden>
+              <span class="filter-lab">颜色</span>
+              <div class="filter-opts" id="colorTabs"></div>
+            </div>
+          </div>
+          <div class="filter-tools">
+            <input id="qInput" type="search" placeholder="搜索名称 / 编号" />
+            <div class="sort-tabs">
+              <button class="text-btn on" id="sortDefault" type="button">默认</button>
+              <button class="text-btn" id="sortHot" type="button">最热</button>
+            </div>
+          </div>
+        </div>
+        <div class="skin-grid" id="skinGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-detail">
+    <header class="chrome">
+      <button type="button" data-home>首页</button>
+      <button type="button" id="backBtn">返回图鉴</button>
+    </header>
+    <div class="page detail-page">
+      <div class="detail-layout">
+        <div class="detail-imgs">
+          <img id="imgB" alt="B 市场图" />
+          <div class="detail-sub">
+            <img id="imgC" alt="C 室内图" />
+            <img id="imgD" alt="D 室外图" />
+          </div>
+        </div>
+        <div class="detail-side-col">
+          <div class="kicker" id="detailWeapon"></div>
+          <h2 class="display display-md" id="detailName">未命名</h2>
+          <p id="detailId"></p>
+          <div id="detailTags" class="skin-tags"></div>
+          <h3>皮肤信息<button id="detailLikeBtn" class="detail-like-btn" aria-pressed="false" title="点赞"><span class="like-icon">♥</span><span class="like-count"></span></button></h3>
+          <ul id="metaList"></ul>
+          <div id="supplementGallery" class="supp-gallery">
+            <div class="supp-gallery-head">
+              <span class="supp-gallery-title">补充图</span>
+              <button id="suppUploadBtn" class="supp-upload-btn" title="上传补充图" type="button">＋</button>
+            </div>
+            <div id="suppGalleryContent" class="supp-gallery-content"></div>
+          </div>
+          <div id="commentSection" class="cm-section"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-hub">
+    <header class="chrome">
+      <button type="button" data-home>首页</button>
+      <span class="kicker">Contribute</span>
+    </header>
+    <div class="page-center">
+      <div class="page-head">
+        <div class="kicker">Upload</div>
+        <h1 class="display display-lg">上传</h1>
+      </div>
+      <div class="hub-list">
+        <button class="hub-item" id="submitBtn" type="button">
+          <span class="display">上传新模板</span>
+          <p>按现站四步投稿：构图、筛选、查重、上传。</p>
+        </button>
+        <button class="hub-item" id="hubPending" type="button">
+          <span class="display">查看待审</span>
+          <p>公开只读。字段与审核列表相同，不能审批。</p>
+        </button>
+        <button class="hub-item" id="reviewBtn" type="button">
+          <span class="display">审批入口</span>
+          <p>密钥进入。通过、拒绝、目录名仅此页。</p>
+        </button>
+      </div>
+      <div id="devTools" class="dev-tools hidden">
+        <div class="dev-tools-label">本地工具</div>
+        <select id="validateWeaponSelect" class="dev-select">
+          <option value="">全量（所有武器）</option>
+        </select>
+        <label class="dev-checkbox-row">
+          <input type="checkbox" id="validateNormalize" />
+          <span>同步规范目录名</span>
+        </label>
+        <button id="validateBtn" class="validate-btn" type="button">校验并更新</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-pending">
+    <header class="chrome">
+      <button type="button" data-home>首页</button>
+      <span class="kicker">Queue</span>
+    </header>
+    <div class="page-center">
+      <div class="page-head">
+        <div class="kicker">Pending</div>
+        <h1 class="display display-lg">待审进度</h1>
+      </div>
+      <div class="pend-list" id="pendList"></div>
+    </div>
+  </section>
+
+  <aside class="site-dock" aria-label="Q群">
+    <p>Q群:765759268</p>
+    <p>大家加群一起玩</p>
+  </aside>
+
+  <div id="validatePanel" class="validate-panel hidden" role="dialog" aria-modal="true">
+    <div class="validate-panel-inner">
+      <div class="validate-panel-head">
+        <span id="validatePanelTitle">校验中…</span>
+        <button id="validatePanelClose" class="validate-panel-close" aria-label="关闭" type="button">×</button>
+      </div>
+      <div id="validatePanelBody" class="validate-panel-body">
+        <div id="validateSpinner" class="validate-spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="submitPanel" class="submit-panel hidden" role="dialog" aria-modal="true"></div>
+  <div id="reviewPanel" class="review-panel hidden" role="dialog" aria-modal="true"></div>
+  <div id="supplementPanel" class="submit-panel hidden" role="dialog" aria-modal="true"></div>
+
+  <div id="lightbox" class="lightbox hidden" role="dialog" aria-modal="true">
+    <button id="lightboxClose" class="lightbox-close" aria-label="关闭大图" type="button">×</button>
+    <img id="lightboxImage" alt="大图预览" />
+  </div>
+
+  <script src="./data/AKM.js"></script>
+  <script src="./data/ASVAL.js"></script>
+  <script src="./data/AUG.js"></script>
+  <script src="./data/K416.js"></script>
+  <script src="./data/KC17.js"></script>
+  <script src="./data/M250.js"></script>
+  <script src="./data/M4A1.js"></script>
+  <script src="./data/M7.js"></script>
+  <script src="./data/MP7.js"></script>
+  <script src="./data/QBZ95.js"></script>
+  <script src="./data/SCARH.js"></script>
+  <script src="./data/Vector.js"></script>
+  <script src="./data/腾龙.js"></script>
+  <script src="./data.js"></script>
+  <script src="./meta.js"></script>
+  <script src="./covers.js"></script>
+  <script src="./comments.js"></script>
+  <script src="./app.js"></script>
+  <script src="./submit.js"></script>
+  <script src="./review.js"></script>
+  <script src="./supplement.js"></script>
+</body>
+</html>
