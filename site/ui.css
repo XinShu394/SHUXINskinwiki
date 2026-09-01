@@ -133,6 +133,7 @@ body::before {
   transform: scale(1.06);
 }
 .focus {
+  position: relative;
   background: none;
   border: 0;
   padding: 0;
@@ -157,10 +158,18 @@ body::before {
   transition: stroke var(--ease), transform var(--ease);
 }
 .focus:hover svg, .focus.is-chosen svg { stroke: var(--accent); }
-.focus .display { font-size: clamp(52px, 8vw, 92px); }
+.focus .display { font-size: clamp(52px, 8vw, 92px); margin: 0; }
 .focus:hover .display, .focus.is-chosen .display { color: var(--text); }
-.focus p {
-  margin: 16px 0 0;
+.focus-notes {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 16px;
+  width: max-content;
+  max-width: 22em;
+}
+.focus-notes p {
+  margin: 0;
   font-size: 14px;
   font-weight: 300;
   color: var(--mute);
@@ -169,16 +178,13 @@ body::before {
   transform: translateY(6px);
   transition: opacity var(--ease), transform var(--ease), color var(--ease);
 }
-.focus:hover p, .focus.is-chosen p {
+.focus:hover .focus-notes p,
+.focus.is-chosen .focus-notes p {
   opacity: 1;
   transform: none;
   color: var(--body);
 }
-.focus p.reward-hint,
-.focus:hover p.reward-hint,
-.focus.is-chosen p.reward-hint {
-  opacity: 1;
-  transform: none;
+.focus-notes p.reward-hint {
   margin-top: 8px;
   font-size: 12px;
   font-weight: 400;
@@ -749,6 +755,7 @@ body::before {
 
 @media (max-width: 860px) {
   .entry-stage { flex-direction: column; align-items: flex-start; gap: 48px; }
+  .focus { margin-bottom: 72px; }
 
   .gallery-shell {
     display: flex;
