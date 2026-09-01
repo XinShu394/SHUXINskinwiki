@@ -174,6 +174,18 @@ body::before {
   transform: none;
   color: var(--body);
 }
+.focus p.reward-hint,
+.focus:hover p.reward-hint,
+.focus.is-chosen p.reward-hint {
+  opacity: 1;
+  transform: none;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.55;
+  max-width: 22em;
+  color: var(--accent);
+}
 .site-dock {
   position: fixed;
   left: 0;
@@ -518,6 +530,14 @@ body::before {
   font-weight: 400;
   color: var(--body);
   max-width: 22em;
+}
+.hub-item p.reward-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--accent);
+  max-width: 24em;
 }
 
 /* 待审 */
