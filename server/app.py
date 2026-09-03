@@ -136,7 +136,7 @@ def _read_approved_skin_ids_from_db(conn: sqlite3.Connection, weapon: str) -> se
 
 def _folder_core_for_serial(rule_mode: str, parsed, base_folder_code: str) -> str:
     """根据武器模式提取“可拼接流水号”的目录核心。"""
-    numeric_modes = {"k416", "qbz95", "tenglong", "material_color"}
+    numeric_modes = {"k416", "qbz95", "tenglong", "material_color", "mk4"}
     if rule_mode in numeric_modes:
         # 这几类目录核心为 normalized_code，天然不带流水。
         return parsed.normalized_code
@@ -330,6 +330,7 @@ def init_db():
     ensure_column(conn, "submissions", "oss_etag_s2", "oss_etag_s2 TEXT")
     ensure_column(conn, "submissions", "oss_etag_s3", "oss_etag_s3 TEXT")
     ensure_column(conn, "submissions", "approved_skin_id", "approved_skin_id TEXT")
+    ensure_column(conn, "submissions", "style", "style TEXT NOT NULL DEFAULT ''")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS supplement_images (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -416,6 +417,7 @@ def sub_to_dict(r) -> dict:
         "material":             r["material"] or "",
         "color1":               r["color1"] or "",
         "color2":               r["color2"] or "",
+        "style":                (r["style"] if "style" in cols else "") or "",
         "notes":                r["notes"] or "",
         "contributor":          r["contributor"],
         "hasA":                 has_a,
@@ -733,6 +735,7 @@ def create_submission():
     material    = clean(data.get("material", ""), 20)
     color1      = clean(data.get("color1", ""), 10)
     color2      = clean(data.get("color2", ""), 10)
+    style       = clean(data.get("style", ""), 10)
     notes       = clean(data.get("notes", ""), 300)
     contributor = clean(data.get("contributor", ""), 20) or "匿名"
 
@@ -755,16 +758,18 @@ def create_submission():
         return jsonify({"error": "品级不能为空"}), 400
     if submission_type == "new_skin" and weapon not in NO_MATERIAL_WEAPONS and not material:
         return jsonify({"error": "材质不能为空"}), 400
+    if submission_type == "new_skin" and weapon == "MK4" and style not in ("经典款", "彩绘款"):
+        return jsonify({"error": "MK4 必须选择更多分类（经典款或彩绘款）"}), 400
 
     now = int(time.time() * 1000)
     query_token = mk_query_token()
     conn = get_db()
     cur = conn.execute(
         """INSERT INTO submissions
-           (status, storage_mode, weapon, skin_name, quality, material, color1, color2, notes, contributor,
+           (status, storage_mode, weapon, skin_name, quality, material, color1, color2, style, notes, contributor,
             created_at, query_token, build_status, submission_type, supplement_skin_id, supplement_folder_code)
-           VALUES ('created', 'oss', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'none', ?, ?, ?)""",
-        (weapon, skin_name, quality, material, color1, color2, notes, contributor, now, query_token,
+           VALUES ('created', 'oss', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'none', ?, ?, ?)""",
+        (weapon, skin_name, quality, material, color1, color2, style, notes, contributor, now, query_token,
          submission_type, supplement_skin_id, supplement_folder_code),
     )
     conn.commit()

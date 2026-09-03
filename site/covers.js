@@ -42,6 +42,12 @@ window.WEAPON_COVERS = [
     "enabled": true
   },
   {
+    "weapon": "MK4",
+    "title": "MK4-疾光魅影",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/MK4-疾光魅影.png",
+    "enabled": true
+  },
+  {
     "weapon": "M7",
     "title": "M7-棱镜攻势S2",
     "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/M7-棱镜攻势S2.png",

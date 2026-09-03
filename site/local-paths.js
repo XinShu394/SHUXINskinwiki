@@ -12,7 +12,11 @@
       if (parsed.host !== OSS_HOST) return url;
 
       const parts = parsed.pathname.split("/").filter(Boolean).map((x) => decodeURIComponent(x));
-      // 期望格式: /<weapon>/<folder>/<filename>
+      // 封面：/枪皮总封面/文件名
+      if (parts.length === 2) {
+        return `../${parts[0]}/${parts[1]}`;
+      }
+      // 皮肤图：/<weapon>/<folder>/<filename>
       if (parts.length < 3) return url;
 
       const weapon = parts[0];

@@ -18,6 +18,8 @@
   var COLOR_OPTS    = ['白', '红', '黄', '青', '紫', '棕', '黑', '灰', '橙', '绿', '蓝', '粉', '炫彩'];
 
   var QUALITY_CODES = { '优品': 'U', '极品': 'J' };
+  var MK4_STYLE_CODES = { '经典款': 'K', '彩绘款': 'H' };
+  var MK4_MAT_ORDER = ['速度线', '镭射贵金属', '贵金属', '镭射', '其他'];
   var COLOR_CODES   = {
     '白': '01', '红': '02', '黄': '03', '青': '04', '紫': '05', '棕': '06',
     '黑': '07', '灰': '08', '橙': '09', '绿': '10', '蓝': '11', '粉': '12', '炫彩': '1111'
@@ -77,6 +79,13 @@
       dualEligible:  [],
       showColor: false, genCode: false
     },
+    'MK4': {
+      materialOpts:  ['速度线', '镭射贵金属', '贵金属', '镭射', '其他'],
+      materialCodes: { '速度线': 'S', '镭射贵金属': 'LG', '贵金属': 'G', '镭射': 'L', '其他': 'Q' },
+      dualEligible:  ['速度线', '镭射贵金属', '贵金属', '镭射', '其他'],
+      showColor: true, genCode: true,
+      styleOpts: ['经典款', '彩绘款']
+    },
     'M7': {
       materialOpts:  ['贵金属', '透光', '镭射', '钻石', '镭射贵金属', '其他'],
       materialCodes: { '贵金属': 'G', '透光': 'T', '镭射': 'L', '钻石': 'D', '镭射贵金属': 'LG', '其他': 'Q' },
@@ -133,7 +142,7 @@
   // ── 初始化 ──────────────────────────────────────────────
   function mkState() {
     return { step: 1, weapon: '', skinName: '', quality: '', material: '',
-             material2: '',
+             material2: '', style: '',
              color1: '', color2: '',
              files: { '1': null, '2': null, '3': null, '4': null },
              coverSlot: '1',
@@ -237,6 +246,15 @@
   }
 
   function isKC17(w) { return w === 'KC17'; }
+  function isMK4(w) { return w === 'MK4'; }
+
+  function encodeMk4Materials(cfg, m1, m2) {
+    var names = [m1];
+    if (m2 && m2 !== '无') names.push(m2);
+    return MK4_MAT_ORDER.filter(function (n) { return names.indexOf(n) !== -1; })
+      .map(function (n) { return cfg.materialCodes[n] || ''; })
+      .join('');
+  }
 
   function buildCodeHint() {
     if (!state.quality) return '—';
@@ -257,6 +275,16 @@
     // 无材质 / 模板武器（M4A1、Vector、AUG、SCARH）
     if (!cfg.genCode) return '—';
     if (!state.material) return '—';
+    if (isMK4(state.weapon)) {
+      if (!state.style) return '—';
+      var styleCode = MK4_STYLE_CODES[state.style] || '?';
+      var mk4Mat = encodeMk4Materials(cfg, state.material, state.material2);
+      if (!state.color1) return q + styleCode + mk4Mat + '????';
+      if (state.color1 === '炫彩') return q + styleCode + mk4Mat + '1111';
+      var mk4c1 = COLOR_CODES[state.color1] || '??';
+      var mk4c2 = (state.color2 && state.color2 !== '单色') ? (COLOR_CODES[state.color2] || '??') : '00';
+      return q + styleCode + mk4Mat + mk4c1 + mk4c2;
+    }
     var mCode = cfg.materialCodes[state.material] || '?';
     // 双材质叠加码
     var m2Code = '';
@@ -282,6 +310,7 @@
     return all.filter(function (s) {
       if (s.weapon !== state.weapon) return false;
       if (state.quality  && s.qualityLabel  !== state.quality)  return false;
+      if (state.style    && s.styleLabel    !== state.style)    return false;
       if (state.material && s.materialLabel !== state.material) return false;
       if (state.color1) {
         if (state.color1 === '炫彩') {
@@ -379,8 +408,13 @@
     h += '<div class="sp-section"><div class="sp-label">稀有度 <span class="sp-req">必填</span></div>';
     h += '<div class="sp-chips">' + chips(QUALITY_OPTS, 'quality', state.quality) + '</div></div>';
 
-    // 材质
     var wcfg = getWeaponCfg(state.weapon);
+    if (isMK4(state.weapon) && wcfg.styleOpts && wcfg.styleOpts.length) {
+      h += '<div class="sp-section"><div class="sp-label">更多分类 <span class="sp-req">必填</span></div>';
+      h += '<div class="sp-chips">' + chips(wcfg.styleOpts, 'style', state.style) + '</div></div>';
+    }
+
+    // 材质
     if (isKC17(state.weapon)) {
       h += '<div class="sp-section"><div class="sp-label">材质 <span class="sp-req">必填</span></div>';
       h += '<div class="sp-chips">' + chips(KC17_MATERIAL_OPTS, 'material', state.material) + '</div>';
@@ -435,7 +469,7 @@
     h += '<div class="sp-body">';
 
     // 筛选条件摘要
-    var summary = [state.weapon, state.quality, state.material];
+    var summary = [state.weapon, state.quality, state.style, state.material].filter(Boolean);
     if (state.color1) summary.push(state.color1 + (state.color2 && state.color2 !== '单色' ? '+' + state.color2 : ''));
     h += '<div class="sp-dupcheck-summary">筛选条件：<strong>' + esc(summary.join(' · ')) + '</strong></div>';
 
@@ -577,6 +611,13 @@
         if (type === 'color1') state.color2 = '';
         // KC17 主材质切换时，清除第二材质（避免无效组合）
         if (type === 'material') state.material2 = '';
+        if (type === 'weapon') {
+          state.style = '';
+          state.material = '';
+          state.material2 = '';
+          state.color1 = '';
+          state.color2 = '';
+        }
         render(step);
       });
     });
@@ -591,6 +632,7 @@
         nextBtn.addEventListener('click', function () {
           if (!state.weapon)  { toast('请先选择武器'); return; }
           if (!state.quality) { toast('请选择稀有度'); return; }
+          if (isMK4(state.weapon) && !state.style) { toast('请选择更多分类'); return; }
           var needMaterial = !isKC17(state.weapon) && getWeaponCfg(state.weapon).materialOpts.length > 0;
           if (needMaterial && !state.material) { toast('请选择材质'); return; }
           if (isKC17(state.weapon) && !state.material) { toast('请选择材质'); return; }
@@ -767,6 +809,7 @@
                 : state.material,
       color1: state.color1 || '',
       color2: state.color2 || '',
+      style: state.style || '',
       notes: notes.trim(),
       contributor: contributor.trim() || '匿名'
     };

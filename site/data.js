@@ -9,6 +9,7 @@
     window._SKIN_DATA_KC17   || [],
     window._SKIN_DATA_M250   || [],
     window._SKIN_DATA_M4A1   || [],
+    window._SKIN_DATA_MK4    || [],
     window._SKIN_DATA_M7     || [],
     window._SKIN_DATA_MP7    || [],
     window._SKIN_DATA_QBZ95  || [],

@@ -43,6 +43,12 @@
       "defaultMaterial": "Q"
     },
     {
+      "weapon": "MK4",
+      "dir": "MK4",
+      "mode": "mk4",
+      "idPrefix": "MK4"
+    },
+    {
       "weapon": "M7",
       "dir": "M7",
       "mode": "material_color"

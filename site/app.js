@@ -3,10 +3,29 @@
     return encodeURI(url).replace(/\+/g, "%2B");
   }
 
+  function resolveCoverSrc(src) {
+    if (!src) return src;
+    const local = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+    if (!local) return src;
+    const marker = "枪皮总封面/";
+    const idx = src.indexOf(marker);
+    const eidx = src.indexOf(encodeURI(marker));
+    let filename = "";
+    if (idx !== -1) filename = src.slice(idx + marker.length);
+    else if (eidx !== -1) filename = src.slice(eidx + encodeURI(marker).length);
+    else return src;
+    filename = filename.split("?")[0];
+    try {
+      filename = decodeURIComponent(filename);
+    } catch {}
+    if (!filename) return src;
+    return "../枪皮总封面/" + filename;
+  }
+
   const qualityMap = { U: "优品", J: "极品" };
   const materialMap = {
     T: "透光", G: "贵金属", Q: "其他", L: "镭射", M: "漆面", Z: "木质",
-    Y: "玉石", D: "钻石", C: "水晶", J: "结构光",
+    Y: "玉石", D: "钻石", C: "水晶", J: "结构光", S: "速度线",
     LG: "镭射贵金属",
   };
   const colorMap = {
@@ -22,6 +41,7 @@
     腾龙: { materialOpts: ["贵金属", "镭射", "镭射贵金属", "其他"], showColor: true },
     AUG: { materialOpts: ["贵金属", "镭射", "其他"], showColor: true },
     M4A1: { materialOpts: [], showColor: false },
+    MK4: { materialOpts: ["速度线", "镭射贵金属", "贵金属", "镭射", "其他"], showColor: true, styleOpts: ["经典款", "彩绘款"] },
     M7: { materialOpts: ["贵金属", "透光", "镭射", "钻石", "镭射贵金属", "其他"], showColor: true },
     M250: { materialOpts: ["贵金属", "透光", "镭射", "钻石", "镭射贵金属", "其他"], showColor: true },
     MP7: { materialOpts: ["贵金属", "透光", "镭射", "水晶", "钻石", "镭射贵金属", "其他"], showColor: true },
@@ -50,7 +70,7 @@
   const metaById = window.SKIN_META || {};
   const weaponCovers = window.WEAPON_COVERS || [];
   const skins = (window.SKIN_DATA || []).map((item) => enrich(item));
-  const state = { query: "", nav: "", quality: "", material: "", color: "", sort: "default" };
+  const state = { query: "", nav: "", quality: "", material: "", color: "", style: "", sort: "default" };
 
   let _skinStats = null;
   let _skinNotes = null;
@@ -176,7 +196,12 @@
     const code = item.normalizedCode || "";
     const qualityCode = code[0] || "";
     const colorCode = /\d{4}$/.test(code) ? code.slice(-4) : "";
-    const materialCode = colorCode ? code.slice(1, -4) : code.slice(1);
+    const isMk4 = item.weapon === "MK4";
+    const styleCode = isMk4 && code.length > 1 ? code[1] : "";
+    const materialCode = colorCode
+      ? code.slice(isMk4 ? 2 : 1, -4)
+      : code.slice(isMk4 ? 2 : 1);
+    const styleMap = { K: "经典款", H: "彩绘款" };
     const c1 = colorCode.slice(0, 2);
     const c2 = colorCode.slice(2, 4);
 
@@ -200,6 +225,7 @@
       qualityLabel: normalizeLabel(item.qualityLabel, qualityMap[qualityCode] || "未标注"),
       materialLabel: normalizeLabel(item.materialLabel, decodeMaterialLabel(materialCode)),
       colorLabel: normalizeLabel(item.colorLabel, colorLabel),
+      styleLabel: normalizeLabel(item.styleLabel, styleMap[styleCode] || ""),
     };
   }
   function decodeMaterialLabel(materialCode) {
@@ -269,7 +295,7 @@
     return `<span class="tag-meta">${escapeHtml(label)}</span>`;
   }
   function skinTagRow(s) {
-    return `<div class="skin-tags">${qualityTag(s.qualityLabel)}${facetTag(s.materialLabel)}${facetTag(s.colorLabel)}</div>`;
+    return `<div class="skin-tags">${qualityTag(s.qualityLabel)}${facetTag(s.styleLabel)}${facetTag(s.materialLabel)}${facetTag(s.colorLabel)}</div>`;
   }
   function labelHas(label, want) {
     if (!want) return true;
@@ -284,6 +310,17 @@
     $("qualityTabs").querySelectorAll(".chip").forEach((b) => {
       b.classList.toggle("on", (b.dataset.v || "") === state.quality);
     });
+    const styleRow = $("styleRow");
+    if (cfg.styleOpts && cfg.styleOpts.length) {
+      if (state.style && !cfg.styleOpts.includes(state.style)) state.style = "";
+      styleRow.hidden = false;
+      $("styleTabs").innerHTML =
+        chipHtml("", "全部", !state.style) +
+        cfg.styleOpts.map((m) => chipHtml(m, m, state.style === m)).join("");
+    } else {
+      state.style = "";
+      if (styleRow) styleRow.hidden = true;
+    }
     const matRow = $("materialRow");
     if (cfg.materialOpts.length) {
       if (state.material && !cfg.materialOpts.includes(state.material)) state.material = "";
@@ -317,7 +354,7 @@
     $("coverGrid").innerHTML = cards
       .map(
         (c) => `<button class="cover" type="button" data-w="${escapeHtml(c.weapon)}">
-          <img src="${escapeHtml(safeEncodeURI(c.src))}" alt="${escapeHtml(c.weapon)}" />
+          <img src="${escapeHtml(safeEncodeURI(resolveCoverSrc(c.src)))}" alt="${escapeHtml(c.weapon)}" />
           <div class="name">${escapeHtml(c.weapon)}</div>
         </button>`
       )
@@ -347,12 +384,13 @@
 
     let list = skins.filter((s) => s.weapon === state.nav);
     if (state.quality) list = list.filter((s) => s.qualityLabel === state.quality);
+    if (state.style) list = list.filter((s) => s.styleLabel === state.style);
     if (state.material) list = list.filter((s) => labelHas(s.materialLabel, state.material));
     if (state.color) list = list.filter((s) => labelHas(s.colorLabel, state.color));
     if (state.query) {
       const q = state.query.toLowerCase();
       list = list.filter((s) => {
-        const hay = [s.name, s.id, s.normalizedCode, s.colorLabel, s.materialLabel, s.qualityLabel]
+        const hay = [s.name, s.id, s.normalizedCode, s.colorLabel, s.materialLabel, s.qualityLabel, s.styleLabel]
           .join(" ")
           .toLowerCase();
         return hay.includes(q);
@@ -501,6 +539,7 @@
     $("metaList").innerHTML = `
       <li><strong>武器：</strong>${escapeHtml(s.weapon)}</li>
       <li><strong>品质：</strong>${escapeHtml(s.qualityLabel)}</li>
+      ${s.styleLabel ? `<li><strong>更多分类：</strong>${escapeHtml(s.styleLabel)}</li>` : ""}
       ${s.materialLabel ? `<li><strong>材质：</strong>${escapeHtml(s.materialLabel)}</li>` : ""}
       ${s.colorLabel ? `<li><strong>配色：</strong>${escapeHtml(s.colorLabel)}</li>` : ""}
       ${s.rating ? `<li><strong>评分：</strong>${escapeHtml(s.rating)}</li>` : ""}
@@ -637,6 +676,9 @@
   }
   onChipRow("qualityTabs", (v) => {
     state.quality = v;
+  });
+  onChipRow("styleTabs", (v) => {
+    state.style = v;
   });
   onChipRow("materialTabs", (v) => {
     state.material = v;

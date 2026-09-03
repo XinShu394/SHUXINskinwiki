@@ -21,6 +21,11 @@
     '星河光': 'X', '贵金属': 'G', '镭射': 'L', '其他': 'Q',
     '大理石': 'R', '镭射贵金属': 'LG', '镭射大理石': 'LR'
   };
+  var MK4_MATERIAL_CODES = {
+    '速度线': 'S', '镭射贵金属': 'LG', '贵金属': 'G', '镭射': 'L', '其他': 'Q'
+  };
+  var MK4_STYLE_CODES = { '经典款': 'K', '彩绘款': 'H' };
+  var MK4_MAT_ORDER = ['速度线', '镭射贵金属', '贵金属', '镭射', '其他'];
   var COLOR_CODES    = {
     '白': '01', '红': '02', '黄': '03', '青': '04', '紫': '05', '棕': '06',
     '黑': '07', '灰': '08', '橙': '09', '绿': '10', '蓝': '11', '粉': '12', '炫彩': '1111'
@@ -99,6 +104,25 @@
         var t = p.trim();
         return (extraCodes && extraCodes[t]) || MATERIAL_CODES[t] || '';
       }).join('');
+    }
+
+    function encodeMk4Materials(matStr) {
+      var parts = (matStr || '').split('+').map(function (p) { return p.trim(); }).filter(Boolean);
+      return MK4_MAT_ORDER.filter(function (n) { return parts.indexOf(n) !== -1; })
+        .map(function (n) { return MK4_MATERIAL_CODES[n] || ''; })
+        .join('');
+    }
+
+    if (sub.weapon === 'MK4') {
+      var styleCode = MK4_STYLE_CODES[sub.style] || '';
+      var mk4Mat = encodeMk4Materials(sub.material);
+      if (!styleCode || !mk4Mat) return '';
+      if (!sub.color1) return q + styleCode + mk4Mat + '????';
+      if (sub.color1 === '炫彩') return q + styleCode + mk4Mat + '1111';
+      var mk4c1 = COLOR_CODES[sub.color1] || '??';
+      var mk4c2 = (sub.color2 && sub.color2 !== '单色' && COLOR_CODES[sub.color2])
+                 ? COLOR_CODES[sub.color2] : '00';
+      return q + styleCode + mk4Mat + mk4c1 + mk4c2;
     }
 
     // KC17 专属（结构光编码为 J，其余通用）
@@ -290,6 +314,7 @@
           (isSupp ? '' :
             '<div class="rp-meta-tags">' +
               (sub.quality  ? '<span class="rp-tag">' + esc(sub.quality)  + '</span>' : '') +
+              (sub.style    ? '<span class="rp-tag">' + esc(sub.style)    + '</span>' : '') +
               (sub.material ? '<span class="rp-tag">' + esc(sub.material) + '</span>' : '') +
               (colorTag     ? '<span class="rp-tag">' + esc(colorTag)     + '</span>' : '') +
             '</div>'

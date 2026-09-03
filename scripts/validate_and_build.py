@@ -21,6 +21,16 @@ MATERIAL_LABEL = {"T": "透光", "G": "贵金属", "Q": "其他", "L": "镭射",
                   "Y": "玉石", "D": "钻石", "C": "水晶"}
 AKM_MATERIAL_LABEL = {"X": "星河光", "G": "贵金属", "L": "镭射", "Q": "其他", "R": "大理石"}
 AKM_MATERIAL_PAIRS = {"LG": "镭射贵金属", "LR": "镭射大理石"}
+MK4_STYLE_LABEL = {"K": "经典款", "H": "彩绘款"}
+MK4_MATERIAL_LABEL = {"S": "速度线", "G": "贵金属", "L": "镭射", "Q": "其他"}
+MK4_MATERIAL_PAIRS = {"LG": "镭射贵金属"}
+# 双材质按 S > LG > G > L > Q 固定拼接，避免同一组合两种码。
+MK4_VALID_MATERIALS = {
+    "S", "LG", "G", "L", "Q",
+    "SLG", "SG", "SL", "SQ",
+    "LGG", "LGL", "LGQ",
+    "GL", "GQ", "LQ",
+}
 COLOR_MAP = {
     "白": "01",
     "红": "02",
@@ -129,6 +139,7 @@ class ParseResult:
     color_label: str
     canonical_folder_code: str
     name_hint: str = ""
+    style_label: str = ""
 
 
 def load_weapon_rules(path: Path) -> list[WeaponRule]:
@@ -253,6 +264,36 @@ def parse_k416_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
         color_label=decode_color_code(color_code),
         canonical_folder_code=canonical_folder,
         name_hint=annotation.get("skinName", ""),
+    )
+
+
+def parse_mk4_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
+    """MK4：[UJ][KH][材质1-3][四位颜色][可选三位流水]。"""
+    base_name, annotation = split_folder_name(folder_name)
+    m = re.fullmatch(r"([UJ])([KH])([SLGQ]{1,3})(\d{4})(\d{3})?", base_name)
+    if not m:
+        raise ValueError(f"目录不符合 MK4 编码模式: {folder_name}")
+    quality, style, material, color_code = m.group(1), m.group(2), m.group(3), m.group(4)
+    serial = m.group(5) or "001"
+    if material not in MK4_VALID_MATERIALS:
+        raise ValueError(f"MK4 材质码不合法: {material} ({folder_name})")
+    normalized_code = f"{quality}{style}{material}{color_code}"
+    id_prefix = rule.id_prefix or rule.weapon
+    skin_id = f"{id_prefix}-{normalized_code}-{serial}"
+    canonical_folder = normalized_code if serial == "001" else f"{normalized_code}{serial}"
+    return ParseResult(
+        skin_id=skin_id,
+        folder_code=folder_name,
+        normalized_code=normalized_code,
+        weapon=rule.weapon,
+        serial=serial,
+        template="",
+        quality_label=QUALITY_LABEL.get(quality, ""),
+        material_label=decode_mk4_material(material),
+        color_label=decode_color_code(color_code),
+        canonical_folder_code=canonical_folder,
+        name_hint=annotation.get("skinName", ""),
+        style_label=MK4_STYLE_LABEL.get(style, ""),
     )
 
 
@@ -571,6 +612,23 @@ def decode_material(material_code: str) -> str:
     return " + ".join(MATERIAL_LABEL.get(c, c) for c in material_code)
 
 
+def decode_mk4_material(material_code: str) -> str:
+    if not material_code:
+        return ""
+    parts: list[str] = []
+    i = 0
+    while i < len(material_code):
+        two = material_code[i : i + 2]
+        if two in MK4_MATERIAL_PAIRS:
+            parts.append(MK4_MATERIAL_PAIRS[two])
+            i += 2
+        else:
+            c = material_code[i]
+            parts.append(MK4_MATERIAL_LABEL.get(c, MATERIAL_LABEL.get(c, c)))
+            i += 1
+    return " + ".join(parts)
+
+
 def decode_akm_material(material_code: str) -> str:
     """优先匹配两字符对（LG/LR），再按单字符解码，支持最多 3 码组合（如 XLG）。"""
     if not material_code:
@@ -792,6 +850,8 @@ def parse_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
         return parse_k416_folder(rule, folder_name)
     if rule.mode == "akm":
         return parse_akm_folder(rule, folder_name)
+    if rule.mode == "mk4":
+        return parse_mk4_folder(rule, folder_name)
     if rule.mode == "qbz95":
         return parse_qbz95_folder(rule, folder_name)
     if rule.mode == "tenglong":
@@ -864,6 +924,8 @@ def build_record(result: ParseResult, image_exts: dict[str, str] | None = None) 
         record["materialLabel"] = result.material_label
     if result.color_label:
         record["colorLabel"] = result.color_label
+    if result.style_label:
+        record["styleLabel"] = result.style_label
     return record
 
 
