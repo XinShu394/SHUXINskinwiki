@@ -28,7 +28,7 @@ logging.basicConfig(
 logger = logging.getLogger("zpbk.api")
 
 # ── 常量 ──────────────────────────────────────────────────
-DB_PATH    = os.path.join(os.path.dirname(__file__), "comments.db")
+DB_PATH    = os.environ.get("ZPBK_DB_PATH") or os.path.join(os.path.dirname(__file__), "comments.db")
 ROOT       = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = Path(__file__).resolve().parent / "uploads" / "pending"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -357,6 +357,27 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_submissions_approved_skin_id ON submissions(approved_skin_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_build_jobs_status ON build_jobs(status)")
     conn.execute("""
+        CREATE TABLE IF NOT EXISTS market_posts (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            status        TEXT    NOT NULL DEFAULT 'created',
+            category      TEXT    NOT NULL,
+            title         TEXT    NOT NULL,
+            body          TEXT    NOT NULL,
+            contributor   TEXT    NOT NULL DEFAULT '匿名',
+            storage_mode  TEXT    NOT NULL DEFAULT 'oss',
+            image_count   INTEGER NOT NULL DEFAULT 0,
+            pending_keys  TEXT    NOT NULL DEFAULT '[]',
+            public_keys   TEXT    NOT NULL DEFAULT '[]',
+            query_token   TEXT,
+            ip            TEXT,
+            created_at    INTEGER NOT NULL,
+            reviewed_at   INTEGER,
+            review_note   TEXT
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_market_status ON market_posts(status, category)")
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_market_token ON market_posts(query_token)")
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS skin_likes (
             skin_id TEXT PRIMARY KEY,
             count   INTEGER NOT NULL DEFAULT 0
@@ -493,6 +514,11 @@ def get_oss_bucket():
     return oss2.Bucket(get_oss_auth(), OSS_ENDPOINT, OSS_BUCKET)
 
 def issue_sts_for_submission(submission_id: int) -> dict:
+    return issue_sts_for_prefix(f"{OSS_PENDING_PREFIX}/{submission_id}/", f"sub-{submission_id}")
+
+
+def issue_sts_for_prefix(prefix: str, tag: str) -> dict:
+    """签发只能写入 prefix 下对象的临时凭证。"""
     if not STS_ROLE_ARN:
         raise RuntimeError("缺少 ALIYUN_STS_ROLE_ARN")
     ak_id = STS_AK_ID or os.environ.get("OSS_ACCESS_KEY_ID", "")
@@ -505,8 +531,7 @@ def issue_sts_for_submission(submission_id: int) -> dict:
     except ImportError as e:
         raise RuntimeError("缺少 aliyun STS SDK，请安装 aliyun-python-sdk-core 与 aliyun-python-sdk-sts") from e
 
-    session_name = f"zpbk-sub-{submission_id}-{random.randint(1000, 9999)}"
-    prefix = f"{OSS_PENDING_PREFIX}/{submission_id}/"
+    session_name = f"zpbk-{tag}-{random.randint(1000, 9999)}"[:64]
     policy = {
         "Version": "1",
         "Statement": [{
@@ -1210,6 +1235,333 @@ def get_supplements():
             "createdAt":   r["created_at"],
         })
     return jsonify({"results": results})
+
+
+# ── 市场焚诀投稿（图文，审核后公开）────────────────────────
+MARKET_CATEGORIES = {"机制": "砖皮市场机制", "见闻": "砖皮市场见闻"}
+MARKET_MAX_IMAGES = 9
+MARKET_STORAGE_MODE = (os.environ.get("MARKET_STORAGE_MODE") or UPLOAD_STORAGE_MODE or "oss").strip().lower()
+MARKET_LOCAL_DIR = Path(os.environ.get("MARKET_LOCAL_DIR") or (Path(__file__).resolve().parent / "uploads" / "market"))
+MARKET_PUBLIC_PREFIX = os.environ.get("OSS_MARKET_PREFIX", "market")
+_market_rate: dict = {}
+MARKET_WINDOW = 86400
+MARKET_LIMIT = int(os.environ.get("MARKET_DAILY_LIMIT", "20"))
+
+
+def _market_category(raw: str) -> str:
+    raw = (raw or "").strip()
+    for short, full in MARKET_CATEGORIES.items():
+        if raw in (short, full):
+            return full
+    return ""
+
+
+def _market_pending_prefix(post_id: int) -> str:
+    return f"{OSS_PENDING_PREFIX}/market/{post_id}/"
+
+
+def _market_file_url(post_id: int, name: str, with_token: bool = False) -> str:
+    url = f"{request.host_url.rstrip('/')}/api/market-files/{post_id}/{name}"
+    if with_token and ADMIN_TOKEN:
+        url += f"?token={ADMIN_TOKEN}"
+    return url
+
+
+def _market_images(r, public: bool) -> list:
+    keys = json.loads((r["public_keys"] if public else r["pending_keys"]) or "[]")
+    if (r["storage_mode"] or "oss") == "local":
+        return [_market_file_url(r["id"], k, with_token=not public) for k in keys]
+    if public:
+        return [_oss_public_url(k) for k in keys]
+    try:
+        bucket = get_oss_bucket()
+        return [bucket.sign_url("GET", k, 600) for k in keys]
+    except Exception as e:
+        logger.warning("market sign_url failed id=%s: %s", r["id"], e)
+        return []
+
+
+def market_to_dict(r, admin: bool = False) -> dict:
+    approved = r["status"] == "approved"
+    d = {
+        "id": r["id"],
+        "category": r["category"],
+        "title": r["title"],
+        "body": r["body"],
+        "contributor": r["contributor"],
+        "createdAt": r["created_at"],
+        "reviewedAt": r["reviewed_at"],
+        "images": _market_images(r, public=approved) if (approved or admin) else [],
+    }
+    if admin:
+        d.update({"status": r["status"], "reviewNote": r["review_note"] or "", "imageCount": r["image_count"]})
+    return d
+
+
+@app.route("/api/market-posts/create", methods=["POST"])
+def market_create():
+    ip = get_ip()
+    if _is_limited(_market_rate, ip, MARKET_WINDOW, MARKET_LIMIT):
+        return jsonify({"error": "今天的投稿次数已达上限，明天再来吧"}), 429
+    data = request.get_json(silent=True) or {}
+    category = _market_category(data.get("category", ""))
+    title = clean(data.get("title", ""), 40)
+    body = (data.get("body", "") or "").replace("\r\n", "\n").strip()[:5000]
+    contributor = clean(data.get("contributor", ""), 20) or "匿名"
+    try:
+        image_count = int(data.get("imageCount", 0) or 0)
+    except (TypeError, ValueError):
+        image_count = 0
+    if not category:
+        return jsonify({"error": "请选择投到「砖皮市场机制」还是「砖皮市场见闻」"}), 400
+    if len(title) < 2:
+        return jsonify({"error": "标题至少 2 个字"}), 400
+    if len(body) < 10:
+        return jsonify({"error": "正文至少 10 个字"}), 400
+    if image_count < 0 or image_count > MARKET_MAX_IMAGES:
+        return jsonify({"error": f"图片最多 {MARKET_MAX_IMAGES} 张"}), 400
+
+    now = int(time.time() * 1000)
+    token = mk_query_token()
+    conn = get_db()
+    cur = conn.execute(
+        """INSERT INTO market_posts (status, category, title, body, contributor, storage_mode,
+               image_count, query_token, ip, created_at)
+           VALUES ('created', ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (category, title, body, contributor, MARKET_STORAGE_MODE, image_count, token, ip, now),
+    )
+    conn.commit()
+    post_id = int(cur.lastrowid)
+    conn.close()
+
+    resp = {"id": post_id, "queryToken": token, "mode": MARKET_STORAGE_MODE,
+            "limits": {"maxFileBytes": MAX_FILE_BYTES, "maxImages": MARKET_MAX_IMAGES,
+                       "allowedTypes": ["image/png", "image/jpeg"]}}
+    if image_count and MARKET_STORAGE_MODE != "local":
+        try:
+            resp["sts"] = issue_sts_for_prefix(_market_pending_prefix(post_id), f"market-{post_id}")
+        except Exception as e:
+            logger.exception("rid=%s market STS 签发失败: %s", getattr(g, "request_id", "-"), e)
+            return jsonify({"error": f"签发上传凭证失败：{e}"}), 500
+    return jsonify(resp), 201
+
+
+def _market_row_by_ticket(post_id: int, token: str):
+    conn = get_db()
+    row = conn.execute("SELECT * FROM market_posts WHERE id=?", (post_id,)).fetchone()
+    conn.close()
+    if not row or not token or row["query_token"] != token:
+        return None
+    return row
+
+
+@app.route("/api/market-posts/<int:post_id>/files", methods=["POST"])
+def market_upload_local(post_id: int):
+    """仅本地模式：浏览器把图片直接传给 API。线上走 OSS 直传，不用这个接口。"""
+    if MARKET_STORAGE_MODE != "local":
+        return jsonify({"error": "当前为 OSS 直传模式"}), 410
+    row = _market_row_by_ticket(post_id, clean(request.args.get("ticket", ""), 200))
+    if not row:
+        return jsonify({"error": "投稿不存在或票据无效"}), 404
+    if row["status"] != "created":
+        return jsonify({"error": "投稿状态不允许上传"}), 400
+    folder = MARKET_LOCAL_DIR / str(post_id)
+    folder.mkdir(parents=True, exist_ok=True)
+    keys = []
+    for i in range(1, row["image_count"] + 1):
+        f = request.files.get(f"img{i}")
+        if not f:
+            continue
+        data = f.stream.read(MAX_FILE_BYTES + 1)
+        if len(data) > MAX_FILE_BYTES:
+            return jsonify({"error": f"第 {i} 张超过 20MB"}), 400
+        kind = check_magic(data[:16])
+        if kind not in ("image/png", "image/jpeg"):
+            return jsonify({"error": f"第 {i} 张不是 PNG/JPEG 图片"}), 400
+        name = f"{i}{'.png' if kind == 'image/png' else '.jpg'}"
+        (folder / name).write_bytes(data)
+        keys.append(name)
+    return jsonify({"ok": True, "keys": keys})
+
+
+@app.route("/api/market-posts/commit", methods=["POST"])
+def market_commit():
+    data = request.get_json(silent=True) or {}
+    try:
+        post_id = int(data.get("id", 0) or 0)
+    except (TypeError, ValueError):
+        post_id = 0
+    row = _market_row_by_ticket(post_id, clean(data.get("queryToken", ""), 200))
+    if not row:
+        return jsonify({"error": "投稿不存在或票据无效"}), 404
+    if row["status"] != "created":
+        return jsonify({"error": "投稿已经提交过了"}), 400
+    keys = [clean(k, 500) for k in (data.get("images") or []) if isinstance(k, str)]
+    if len(keys) > row["image_count"]:
+        return jsonify({"error": "图片数量和创建时不一致"}), 400
+
+    if row["storage_mode"] == "local":
+        folder = MARKET_LOCAL_DIR / str(post_id)
+        for k in keys:
+            if "/" in k or "\\" in k or ".." in k or not (folder / k).is_file():
+                return jsonify({"error": f"图片 {k} 不存在"}), 400
+    elif keys:
+        prefix = _market_pending_prefix(post_id)
+        try:
+            bucket = get_oss_bucket()
+            for k in keys:
+                if not k.startswith(prefix):
+                    return jsonify({"error": f"图片 key 非法，必须位于 {prefix}"}), 400
+                validate_oss_object(bucket, k)
+        except RuntimeError as e:
+            return jsonify({"error": str(e)}), 400
+        except Exception as e:
+            return jsonify({"error": f"OSS 校验失败：{e}"}), 500
+
+    conn = get_db()
+    conn.execute("UPDATE market_posts SET status='pending_review', pending_keys=? WHERE id=?",
+                 (json.dumps(keys), post_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True, "id": post_id})
+
+
+@app.route("/api/market-posts", methods=["GET"])
+def market_list():
+    """公开：已审核通过的投稿。category 可选 机制 / 见闻。"""
+    category = _market_category(request.args.get("category", ""))
+    try:
+        limit = max(1, min(100, int(request.args.get("limit", 50))))
+    except ValueError:
+        limit = 50
+    conn = get_db()
+    if category:
+        rows = conn.execute(
+            "SELECT * FROM market_posts WHERE status='approved' AND category=? ORDER BY created_at DESC LIMIT ?",
+            (category, limit)).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM market_posts WHERE status='approved' ORDER BY created_at DESC LIMIT ?",
+            (limit,)).fetchall()
+    conn.close()
+    return jsonify({"results": [market_to_dict(r) for r in rows]})
+
+
+@app.route("/api/market-posts/query", methods=["GET"])
+def market_query():
+    token = clean(request.args.get("ticket", ""), 200)
+    if not token:
+        return jsonify({"error": "ticket 不能为空"}), 400
+    conn = get_db()
+    row = conn.execute("SELECT * FROM market_posts WHERE query_token=?", (token,)).fetchone()
+    conn.close()
+    if not row:
+        return jsonify({"error": "票据无效"}), 404
+    return jsonify({"result": {"id": row["id"], "status": row["status"], "title": row["title"],
+                               "category": row["category"], "createdAt": row["created_at"],
+                               "reviewNote": row["review_note"] or ""}})
+
+
+@app.route("/api/market-posts/review", methods=["GET"])
+def market_review_list():
+    if not check_token():
+        return jsonify({"error": "无权限"}), 401
+    status = normalize_status(request.args.get("status", "pending_review"))
+    conn = get_db()
+    rows = conn.execute("SELECT * FROM market_posts WHERE status=? ORDER BY created_at DESC", (status,)).fetchall()
+    conn.close()
+    return jsonify({"results": [market_to_dict(r, admin=True) for r in rows]})
+
+
+@app.route("/api/market-posts/<int:post_id>", methods=["GET"])
+def market_get(post_id: int):
+    conn = get_db()
+    row = conn.execute("SELECT * FROM market_posts WHERE id=?", (post_id,)).fetchone()
+    conn.close()
+    admin = check_token()
+    if not row or (row["status"] != "approved" and not admin):
+        return jsonify({"error": "投稿不存在或还没通过审核"}), 404
+    return jsonify({"result": market_to_dict(row, admin=admin)})
+
+
+@app.route("/api/market-posts/<int:post_id>/approve", methods=["PUT"])
+def market_approve(post_id: int):
+    if not check_token():
+        return jsonify({"error": "无权限"}), 401
+    data = request.get_json(silent=True) or {}
+    conn = get_db()
+    row = conn.execute("SELECT * FROM market_posts WHERE id=?", (post_id,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"error": "投稿不存在"}), 404
+    if row["status"] == "approved":
+        conn.close()
+        return jsonify({"ok": True, "alreadyApproved": True})
+    if row["status"] != "pending_review":
+        conn.close()
+        return jsonify({"error": "该投稿状态不允许审核通过"}), 400
+    category = _market_category(data.get("category", "")) or row["category"]
+    title = clean(data.get("title", ""), 40) or row["title"]
+    pending = json.loads(row["pending_keys"] or "[]")
+    public = []
+    if row["storage_mode"] == "local":
+        public = pending
+    elif pending:
+        try:
+            bucket = get_oss_bucket()
+            for i, key in enumerate(pending, 1):
+                ext = os.path.splitext(key)[1] or ".jpg"
+                dst = f"{MARKET_PUBLIC_PREFIX}/{post_id}/{i}{ext}"
+                bucket.copy_object(OSS_BUCKET, key, dst)
+                public.append(dst)
+        except Exception as e:
+            conn.close()
+            logger.exception("market approve copy failed id=%s: %s", post_id, e)
+            return jsonify({"error": f"图片转存失败：{e}"}), 500
+    now = int(time.time() * 1000)
+    conn.execute(
+        "UPDATE market_posts SET status='approved', category=?, title=?, public_keys=?, reviewed_at=? WHERE id=?",
+        (category, title, json.dumps(public), now, post_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/market-posts/<int:post_id>/reject", methods=["PUT"])
+def market_reject(post_id: int):
+    if not check_token():
+        return jsonify({"error": "无权限"}), 401
+    data = request.get_json(silent=True) or {}
+    note = clean(data.get("note", ""), 200)
+    conn = get_db()
+    row = conn.execute("SELECT id FROM market_posts WHERE id=?", (post_id,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"error": "投稿不存在"}), 404
+    now = int(time.time() * 1000)
+    conn.execute("UPDATE market_posts SET status='rejected', reviewed_at=?, review_note=? WHERE id=?",
+                 (now, note, post_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/market-files/<int:post_id>/<name>", methods=["GET"])
+def market_file(post_id: int, name: str):
+    """仅本地模式：读取投稿图片。未通过审核的图片需要管理员密钥。"""
+    if not re.fullmatch(r"\d{1,2}\.(png|jpg)", name):
+        return jsonify({"error": "文件名非法"}), 400
+    conn = get_db()
+    row = conn.execute("SELECT status, storage_mode FROM market_posts WHERE id=?", (post_id,)).fetchone()
+    conn.close()
+    if not row or row["storage_mode"] != "local":
+        return jsonify({"error": "图片不存在"}), 404
+    if row["status"] != "approved" and not check_token():
+        return jsonify({"error": "无权限"}), 401
+    path = MARKET_LOCAL_DIR / str(post_id) / name
+    if not path.is_file():
+        return jsonify({"error": "图片不存在"}), 404
+    return send_file(str(path))
 
 
 # ── 启动 ──────────────────────────────────────────────────

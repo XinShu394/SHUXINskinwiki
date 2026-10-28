@@ -1,18 +1,18 @@
-# ── 武器图片文件夹（上传到 OSS，不进 GitHub）──────────────
-ASVAL/
-AUG/
-K416/
-KC17/
-M4A1/
-MK4/
-M250/
-M7/
-MP7/
-QBZ95/
-SCARH/
-Vector/
-腾龙/
-枪皮总封面/
+# ── 仓库根的武器图片文件夹（上传到 OSS，不进 GitHub）。加 / 只匹配根目录，不影响 wiki/ 和 site/wiki/ 里的同名文件夹 ──
+/ASVAL/
+/AUG/
+/K416/
+/KC17/
+/M4A1/
+/MK4/
+/M250/
+/M7/
+/MP7/
+/QBZ95/
+/SCARH/
+/Vector/
+/腾龙/
+/枪皮总封面/
 
 # ── 旧版本副本（可以直接删掉，占了 ~5.7GB）─────────────────
 skin-wiki/
@@ -37,3 +37,24 @@ docs/
 浓缩SOP/
 部署架构说明.md
 
+# ── 知识库本地预览的测试数据 ─────────────────────────────
+wiki/preview/_local/
+server/uploads/
+
+# ── 知识库源图片与素材（图片以 site/wiki/ 里的压缩版进仓库）──
+wiki/内容/**/*.png
+wiki/内容/**/*.jpg
+wiki/内容/**/*.jpeg
+wiki/内容/**/*.PNG
+wiki/内容/**/*.JPG
+wiki/素材库/
+wiki/preview/data.js
+
+# ── 本地资源与草稿，不进仓库 ──
+.claude/
+新模块资源/
+视频工程/
+视频方案/
+SHUXIN_角色资产包/
+tmp_imagegen_test/
+wiki修改意见.txt
