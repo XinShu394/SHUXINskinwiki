@@ -159,6 +159,8 @@ body::before {
 }
 .focus:hover svg, .focus.is-chosen svg { stroke: var(--accent); }
 .focus .display { font-size: clamp(52px, 8vw, 92px); margin: 0; }
+.entry-three { gap: clamp(36px, 7vw, 110px); }
+.entry-three .focus .display { font-size: clamp(44px, 6.4vw, 84px); white-space: nowrap; }
 .focus:hover .display, .focus.is-chosen .display { color: var(--text); }
 .focus-notes {
   position: absolute;

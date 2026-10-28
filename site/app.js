@@ -653,6 +653,11 @@
       location.hash = "#gallery";
     });
   };
+  $("focusWiki").onclick = () => {
+    leaveEntry("focusWiki", () => {
+      location.href = "./wiki/index.html#kb";
+    });
+  };
   $("focusUpload").onclick = () => {
     leaveEntry("focusUpload", () => {
       location.hash = "#upload";

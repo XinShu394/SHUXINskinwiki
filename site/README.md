@@ -22,3 +22,11 @@
 - 用户投稿 API：`/api/submit`
 - 审核通过 API：`/api/submissions/<id>/approve`
 - 审核通过后会把图片落到武器目录并触发构建
+
+## 焚诀（知识库）
+
+- 进入页第二个入口「焚诀」打开 `site/wiki/index.html#kb`，是独立的一套静态页面（浅色档案风）。
+- 内容源在仓库根的 `wiki/内容/`（Markdown + 图片），写法见 `wiki/补充指南.md`，样式规范见 `wiki/美学标准.md`。
+- 本地预览：`python wiki/preview/build.py`，访问 `http://localhost:8765/wiki/preview/index.html`。
+- 发布：`python wiki/preview/build.py --site`，把网页和压缩图写进 `site/wiki/`，再提交。
+- 玩家见闻的投稿和审核页目前是「正在开发」占位；对应的 `/api/market-posts` 接口已在 `server/app.py` 里，部署并重启 API 后再把前端切过去。

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>焚诀 · 砖皮百科</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./preview.css" />
+</head>
+<body>
+
+  <!-- 进入页：沿用站点深色，三个对等入口 -->
+  <section class="view" id="view-entry">
+    <header class="chrome">
+      <span class="kicker brand">ZPBK</span>
+      <span class="kicker">砖皮百科</span>
+    </header>
+    <div class="entry-stage" id="entryStage">
+      <button class="focus" data-go="gallery" type="button">
+        <svg viewBox="0 0 88 88" aria-hidden="true">
+          <path d="M8 58h44l18-8 10 4M8 58l8-22h28l10 22M20 36V22h22v8M52 50h18" />
+          <circle cx="22" cy="64" r="6" />
+          <circle cx="48" cy="64" r="6" />
+        </svg>
+        <h1 class="display">图鉴</h1>
+        <p class="focus-note">浏览已收录枪皮。按枪种进入，筛选、对比真实皮肤图。</p>
+      </button>
+      <button class="focus" data-go="kb" type="button">
+        <svg viewBox="0 0 88 88" aria-hidden="true">
+          <path d="M18 14h40l12 12v48H18z" />
+          <path d="M58 14v12h12" />
+          <path d="M28 40h32M28 50h32M28 60h20" />
+        </svg>
+        <h1 class="display">焚诀</h1>
+        <p class="focus-note">选皮焚诀、市场焚诀，和新手入门合集。</p>
+      </button>
+      <button class="focus" data-go="upload" type="button">
+        <svg viewBox="0 0 88 88" aria-hidden="true">
+          <path d="M44 70V22M44 22L30 36M44 22l14 14" />
+          <path d="M18 58v12h52V58" />
+        </svg>
+        <h1 class="display">上传</h1>
+        <p class="focus-note">投稿新模板、查看待审进度，或进入审核。</p>
+      </button>
+    </div>
+    <aside class="site-dock" aria-label="Q群">
+      <p>Q群:765759268</p>
+      <p>大家加群一起玩</p>
+    </aside>
+  </section>
+
+  <!-- 知识库：浅色档案风 -->
+  <section class="view" id="view-kb">
+    <aside class="kb-side" id="kbSide">
+      <a class="kb-logo" href="#kb">
+        <img class="kb-avatar" src="./assets/avatar.jpg" alt="SHUXIN" />
+        <span class="kb-logo-text">
+          <b>知识库</b>
+          <small>SHUXIN · ARCHIVE</small>
+        </span>
+      </a>
+
+      <nav class="kb-nav" id="kbNav"></nav>
+
+      <div class="kb-side-foot">
+        <button type="button" class="kb-back" data-home>
+          <span aria-hidden="true">←</span> 返回砖皮百科
+        </button>
+        <p>Q群:765759268 · 大家加群一起玩</p>
+        <a class="kb-admin" href="#kb/审核">审核入口</a>
+      </div>
+    </aside>
+
+    <main class="kb-main" id="kbMain"></main>
+  </section>
+
+  <!-- 预览工具：只在本地预览出现 -->
+  <div class="devbar" id="devbar">
+    <span class="devbar-label">预览</span>
+    <label><input type="checkbox" id="optDrafts" checked /> 显示草稿</label>
+    <label><input type="checkbox" id="optEditor" checked /> 编辑信息</label>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <div class="peek" id="peek" aria-hidden="true"><img alt="" /><span class="peek-cap"></span></div>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" hidden>
+    <button class="lb-btn lb-close" id="lbClose" type="button" aria-label="关闭">×</button>
+    <button class="lb-btn lb-prev" id="lbPrev" type="button" aria-label="上一张">‹</button>
+    <figure>
+      <img id="lbImg" alt="" />
+      <figcaption id="lbCap"></figcaption>
+    </figure>
+    <button class="lb-btn lb-next" id="lbNext" type="button" aria-label="下一张">›</button>
+  </div>
+
+  <script src="./data.js"></script>
+  <script src="./preview.js"></script>
+</body>
+</html>
