@@ -39,7 +39,7 @@
   const collsFor = (tier) => COLLS.filter((c) => c.tier === tier && (state.drafts || c.status === "发布"));
   const collHref = (c, no) => `#kb/c/${encodeURIComponent(c.id)}${no != null ? "/" + no : ""}`;
 
-  const visible = () => D.articles.filter((a) => state.drafts || a.status === "发布").sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
+  const visible = () => D.articles.filter((a) => (state.drafts || a.status === "发布") && !(SITE && a.stub)).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
   const forWeapon = (w, tier) => visible().filter((a) => a.section === "选皮焚诀" && !a.collection && a.weapon === w && (!tier || a.tier === tier));
   const forMarket = (sub) => visible().filter((a) => a.section === "市场焚诀" && !a.collection && (!sub || a.tier === sub));
   const cover = (w) => D.covers[w] || null;
@@ -325,12 +325,14 @@
   function renderWeapon(w, tierKey) {
     if (!D.weapons.includes(w)) return (location.hash = "#kb/选皮焚诀");
     const idx = D.weapons.indexOf(w);
-    const cur = TIERS.find((t) => t.key === tierKey) || TIERS.find((t) => forWeapon(w, t.key).length) || TIERS[0];
+    const written = TIERS.filter((t) => forWeapon(w, t.key).length);
+    const shown = SITE ? (written.length ? written : [TIERS[2]]) : TIERS;
+    const cur = shown.find((t) => t.key === tierKey) || written[0] || shown[0];
     const list = forWeapon(w, cur.key);
     const pick = list.find((a) => a.id === state.pick[w + cur.key]) || list[0];
     const prev = D.weapons[(idx - 1 + D.weapons.length) % D.weapons.length];
     const next = D.weapons[(idx + 1) % D.weapons.length];
-    const tabs = TIERS.map((t) => {
+    const tabs = shown.map((t) => {
       const n = forWeapon(w, t.key).length;
       return `<button class="tier${t === cur ? " on" : ""}" data-tier="${t.key}" type="button"><span class="badge ${t.cls}">${t.key}</span>${t.label}<span class="st">${n ? pad2(n) : "待补"}</span></button>`;
     }).join("");
@@ -339,7 +341,7 @@
          ${readerHtml(pick, true)}`
       : `<div class="empty-tier">
            <div class="kicker">${esc(w)} · ${cur.label} · 待补</div>
-           <h3>这一栏还在整理</h3>
+           <h3>${SITE && !written.length ? "这把枪的焚诀还在整理" : "这一栏还在整理"}</h3>
            <p class="editor-only">把正文.md 和图片放进 <code>wiki/内容/选皮焚诀/${esc(w)}/${cur.key}/</code>，运行一次 build.py，这里就会出现。</p>
          </div>`;
     main().innerHTML = `
@@ -352,7 +354,7 @@
           <div class="cover-name">封面 · ${esc(coverTitle(w))}</div>
           <div class="facts">
             <div><b>${(D.skinCounts || {})[w] || 0}</b>图鉴收录</div>
-            ${TIERS.map((t) => `<div><b>${forWeapon(w, t.key).length ? "已写" : "待补"}</b>${t.label}</div>`).join("")}
+            ${shown.map((t) => `<div><b>${forWeapon(w, t.key).length ? "已写" : "待补"}</b>${t.label}</div>`).join("")}
           </div>
           <a class="to-gallery" href="${GALLERY}#w=${encodeURIComponent(w)}" target="_blank" rel="noopener">在图鉴里看 ${esc(w)} ↗</a>
         </div>

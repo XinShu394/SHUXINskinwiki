@@ -609,6 +609,8 @@ def main():
             "stability": "易变" if meta.get("易变", "否") in ("是", "易变") else "长期",
             "lead": lead_html,
             "leadIsStub": lead_raw.strip() in ("", "待写。", "待写"),
+            # 只有模板骨架、没写内容：先看这一段是「待补」且没有图。正式站不显示这种文章
+            "stub": lead_stats["todo"] > 0 and stats["images"] == 0 and stats["cards"] == 0,
             "body": main_html,
             "ownNumbers": bool(collection) or bool(stats["toc"]) and all(re.match(r"^\d", t["title"]) for t in stats["toc"] if t["level"] == 1),
             "toc": stats["toc"],
