@@ -6,6 +6,7 @@
     window._SKIN_DATA_ASVAL  || [],
     window._SKIN_DATA_AUG    || [],
     window._SKIN_DATA_K416   || [],
+    window._SKIN_DATA_K437   || [],
     window._SKIN_DATA_KC17   || [],
     window._SKIN_DATA_M250   || [],
     window._SKIN_DATA_M4A1   || [],

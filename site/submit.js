@@ -34,6 +34,8 @@
   // materialOpts: 可选材质列表（空数组 = 该武器无材质选项）
   // materialCodes: 材质 → 编码映射
   // dualEligible: 可叠加第二材质的主材质列表（空 = 不支持双材质）
+  // dualSecondOpts: 第二材质的候选（不填 = 用 dualEligible 里除主材质外的项）
+  // dualHint: 第二材质行的提示文字（不填 = 「可叠加」）
   // showColor: 是否显示颜色选择
   // genCode: 是否生成目录编码预览（模板武器用皮肤名命名，显示"—"）
   var WEAPON_CONFIG = {
@@ -47,6 +49,15 @@
       materialOpts:  ['贵金属', '透光', '其他'],
       materialCodes: { '贵金属': 'G', '透光': 'T', '其他': 'Q' },
       dualEligible:  ['贵金属', '透光'],
+      showColor: true, genCode: true
+    },
+    // K437：材质最多两项，且只有「流星光」能叠加第二项（流星光+镭射贵金属 / 贵金属 / 镭射 / 其他），其余单选
+    'K437': {
+      materialOpts:  ['流星光', '镭射贵金属', '贵金属', '镭射', '其他'],
+      materialCodes: { '流星光': 'F', '镭射贵金属': 'LG', '贵金属': 'G', '镭射': 'L', '其他': 'Q' },
+      dualEligible:  ['流星光'],
+      dualSecondOpts: ['镭射贵金属', '贵金属', '镭射', '其他'],
+      dualHint: '只有流星光可叠加，如流星光+镭射贵金属',
       showColor: true, genCode: true
     },
     'AKM': {
@@ -429,9 +440,10 @@
       h += '<div class="sp-section"><div class="sp-label">材质 <span class="sp-req">必填</span></div>';
       h += '<div class="sp-chips">' + chips(wcfg.materialOpts, 'material', state.material) + '</div>';
       if (state.material && wcfg.dualEligible.length > 0 && wcfg.dualEligible.indexOf(state.material) !== -1) {
-        var dm2opts = ['无'].concat(wcfg.dualEligible.filter(function (o) { return o !== state.material; }));
+        var dm2src  = wcfg.dualSecondOpts || wcfg.dualEligible;
+        var dm2opts = ['无'].concat(dm2src.filter(function (o) { return o !== state.material; }));
         var dm2cur  = state.material2 || '无';
-        h += '<div class="sp-label" style="margin-top:6px">第二材质 <span class="sp-hint">可叠加</span></div>';
+        h += '<div class="sp-label" style="margin-top:6px">第二材质 <span class="sp-hint">' + esc(wcfg.dualHint || '可叠加') + '</span></div>';
         h += '<div class="sp-chips">' + chips(dm2opts, 'material2', dm2cur) + '</div>';
       }
       h += '</div>';

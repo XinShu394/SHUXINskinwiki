@@ -12,6 +12,12 @@
       "idPrefix": "K4"
     },
     {
+      "weapon": "K437",
+      "dir": "K437",
+      "mode": "k437",
+      "idPrefix": "K437"
+    },
+    {
       "weapon": "QBZ95",
       "dir": "QBZ95",
       "mode": "qbz95"

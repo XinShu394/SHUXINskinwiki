@@ -25,7 +25,7 @@
   const qualityMap = { U: "优品", J: "极品" };
   const materialMap = {
     T: "透光", G: "贵金属", Q: "其他", L: "镭射", M: "漆面", Z: "木质",
-    Y: "玉石", D: "钻石", C: "水晶", J: "结构光", S: "速度线",
+    Y: "玉石", D: "钻石", C: "水晶", J: "结构光", S: "速度线", F: "流星光",
     LG: "镭射贵金属",
   };
   const colorMap = {
@@ -37,6 +37,7 @@
   const WEAPON_FILTER_CONFIG = {
     ASVAL: { materialOpts: ["贵金属", "玉石", "镭射", "漆面", "木质", "其他"], showColor: true },
     K416: { materialOpts: ["贵金属", "透光", "其他"], showColor: true },
+    K437: { materialOpts: ["流星光", "镭射贵金属", "贵金属", "镭射", "其他"], showColor: true },
     QBZ95: { materialOpts: ["贵金属", "其他"], showColor: true },
     腾龙: { materialOpts: ["贵金属", "镭射", "镭射贵金属", "其他"], showColor: true },
     AUG: { materialOpts: ["贵金属", "镭射", "其他"], showColor: true },

@@ -24,6 +24,12 @@ window.WEAPON_COVERS = [
     "enabled": true
   },
   {
+    "weapon": "K437",
+    "title": "K437-王者之剑",
+    "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/K437-王者之剑.png",
+    "enabled": true
+  },
+  {
     "weapon": "KC17",
     "title": "KC17-造物纪元",
     "src": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/KC17-造物纪元.png",

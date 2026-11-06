@@ -31,6 +31,13 @@ MK4_VALID_MATERIALS = {
     "LGG", "LGL", "LGQ",
     "GL", "GQ", "LQ",
 }
+K437_MATERIAL_LABEL = {"F": "流星光", "G": "贵金属", "L": "镭射", "Q": "其他"}
+K437_MATERIAL_PAIRS = {"LG": "镭射贵金属"}
+# K437 最多两项材质，且只有流星光（F）打头时才允许叠加第二项；其余都是单独词条。
+K437_VALID_MATERIALS = {
+    "F", "LG", "G", "L", "Q",
+    "FLG", "FG", "FL", "FQ",
+}
 COLOR_MAP = {
     "白": "01",
     "红": "02",
@@ -294,6 +301,35 @@ def parse_mk4_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
         canonical_folder_code=canonical_folder,
         name_hint=annotation.get("skinName", ""),
         style_label=MK4_STYLE_LABEL.get(style, ""),
+    )
+
+
+def parse_k437_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
+    """K437：[UJ][材质1-3][四位颜色][可选三位流水]。材质见 K437_VALID_MATERIALS。"""
+    base_name, annotation = split_folder_name(folder_name)
+    m = re.fullmatch(r"([UJ])([FLGQ]{1,3})(\d{4})(\d{3})?", base_name)
+    if not m:
+        raise ValueError(f"目录不符合 K437 编码模式: {folder_name}")
+    quality, material, color_code = m.group(1), m.group(2), m.group(3)
+    serial = m.group(4) or "001"
+    if material not in K437_VALID_MATERIALS:
+        raise ValueError(f"K437 材质码不合法: {material}（只允许流星光 F 打头叠加第二项）({folder_name})")
+    normalized_code = f"{quality}{material}{color_code}"
+    id_prefix = rule.id_prefix or rule.weapon
+    skin_id = f"{id_prefix}-{normalized_code}-{serial}"
+    canonical_folder = normalized_code if serial == "001" else f"{normalized_code}{serial}"
+    return ParseResult(
+        skin_id=skin_id,
+        folder_code=folder_name,
+        normalized_code=normalized_code,
+        weapon=rule.weapon,
+        serial=serial,
+        template="",
+        quality_label=QUALITY_LABEL.get(quality, ""),
+        material_label=decode_k437_material(material),
+        color_label=decode_color_code(color_code),
+        canonical_folder_code=canonical_folder,
+        name_hint=annotation.get("skinName", ""),
     )
 
 
@@ -629,6 +665,24 @@ def decode_mk4_material(material_code: str) -> str:
     return " + ".join(parts)
 
 
+def decode_k437_material(material_code: str) -> str:
+    """先匹配 LG（镭射贵金属），再按单字符解码，如 FLG -> 流星光 + 镭射贵金属。"""
+    if not material_code:
+        return ""
+    parts: list[str] = []
+    i = 0
+    while i < len(material_code):
+        two = material_code[i : i + 2]
+        if two in K437_MATERIAL_PAIRS:
+            parts.append(K437_MATERIAL_PAIRS[two])
+            i += 2
+        else:
+            c = material_code[i]
+            parts.append(K437_MATERIAL_LABEL.get(c, MATERIAL_LABEL.get(c, c)))
+            i += 1
+    return " + ".join(parts)
+
+
 def decode_akm_material(material_code: str) -> str:
     """优先匹配两字符对（LG/LR），再按单字符解码，支持最多 3 码组合（如 XLG）。"""
     if not material_code:
@@ -852,6 +906,8 @@ def parse_folder(rule: WeaponRule, folder_name: str) -> ParseResult:
         return parse_akm_folder(rule, folder_name)
     if rule.mode == "mk4":
         return parse_mk4_folder(rule, folder_name)
+    if rule.mode == "k437":
+        return parse_k437_folder(rule, folder_name)
     if rule.mode == "qbz95":
         return parse_qbz95_folder(rule, folder_name)
     if rule.mode == "tenglong":

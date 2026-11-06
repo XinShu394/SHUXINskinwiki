@@ -136,7 +136,7 @@ def _read_approved_skin_ids_from_db(conn: sqlite3.Connection, weapon: str) -> se
 
 def _folder_core_for_serial(rule_mode: str, parsed, base_folder_code: str) -> str:
     """根据武器模式提取“可拼接流水号”的目录核心。"""
-    numeric_modes = {"k416", "qbz95", "tenglong", "material_color", "mk4"}
+    numeric_modes = {"k416", "qbz95", "tenglong", "material_color", "mk4", "k437"}
     if rule_mode in numeric_modes:
         # 这几类目录核心为 normalized_code，天然不带流水。
         return parsed.normalized_code
@@ -193,6 +193,28 @@ def _resolve_unique_skin_target(
         return candidate_base, candidate_id, adjusted, ""
 
     return "", "", False, f"固定起始号 100 分配失败：{weapon} 下 100~999 序号已占满"
+
+
+# ── K437 材质规则 ─────────────────────────────────────────
+K437_MATERIALS = ("流星光", "镭射贵金属", "贵金属", "镭射", "其他")
+
+
+def validate_k437_material(material: str) -> str:
+    """K437 最多两项材质，且只有流星光才能叠加第二项。返回错误文案，合法时返回空串。"""
+    parts = [p.strip() for p in (material or "").split("+") if p.strip()]
+    if not parts:
+        return "材质不能为空"
+    if len(parts) > 2:
+        return "K437 材质最多选两项"
+    for p in parts:
+        if p not in K437_MATERIALS:
+            return f"K437 没有材质「{p}」"
+    if len(parts) == 2:
+        if parts[0] != "流星光":
+            return "K437 只有流星光可以叠加第二材质，其他材质只能单独选择"
+        if parts[1] == "流星光":
+            return "K437 第二材质不能重复选择流星光"
+    return ""
 
 
 # ── 频率限制 ──────────────────────────────────────────────
@@ -785,6 +807,10 @@ def create_submission():
         return jsonify({"error": "材质不能为空"}), 400
     if submission_type == "new_skin" and weapon == "MK4" and style not in ("经典款", "彩绘款"):
         return jsonify({"error": "MK4 必须选择更多分类（经典款或彩绘款）"}), 400
+    if submission_type == "new_skin" and weapon == "K437":
+        k437_err = validate_k437_material(material)
+        if k437_err:
+            return jsonify({"error": k437_err}), 400
 
     now = int(time.time() * 1000)
     query_token = mk_query_token()

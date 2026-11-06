@@ -46,7 +46,7 @@
   const coverImg = (w) => {
     const c = cover(w);
     if (!c) return "";
-    return `<img src="${esc(c.local)}" data-remote="${esc(c.remote)}" alt="" loading="lazy" onerror="if(this.dataset.remote&&this.src!==this.dataset.remote){this.src=this.dataset.remote}">`;
+    return `<img src="${esc(c.local)}" data-remote="${esc(c.remote)}" alt="" loading="lazy" onerror="this.onerror=null;if(this.dataset.remote){this.src=this.dataset.remote}">`;
   };
   const coverTitle = (w) => {
     const c = cover(w);

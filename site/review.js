@@ -26,6 +26,11 @@
   };
   var MK4_STYLE_CODES = { '经典款': 'K', '彩绘款': 'H' };
   var MK4_MAT_ORDER = ['速度线', '镭射贵金属', '贵金属', '镭射', '其他'];
+  // K437 专属材质编码（F=流星光）。最多两项，且只有流星光能叠加第二项，编码时流星光固定在前
+  var K437_MATERIAL_CODES = {
+    '流星光': 'F', '镭射贵金属': 'LG', '贵金属': 'G', '镭射': 'L', '其他': 'Q'
+  };
+  var K437_MAT_ORDER = ['流星光', '镭射贵金属', '贵金属', '镭射', '其他'];
   var COLOR_CODES    = {
     '白': '01', '红': '02', '黄': '03', '青': '04', '紫': '05', '棕': '06',
     '黑': '07', '灰': '08', '橙': '09', '绿': '10', '蓝': '11', '粉': '12', '炫彩': '1111'
@@ -111,6 +116,21 @@
       return MK4_MAT_ORDER.filter(function (n) { return parts.indexOf(n) !== -1; })
         .map(function (n) { return MK4_MATERIAL_CODES[n] || ''; })
         .join('');
+    }
+
+    if (sub.weapon === 'K437') {
+      var k437Parts = (sub.material || '').split('+').map(function (p) { return p.trim(); }).filter(Boolean);
+      var k437Names = K437_MAT_ORDER.filter(function (n) { return k437Parts.indexOf(n) !== -1; });
+      // 两项时第一项必须是流星光，否则不给建议（审核员手动处理）
+      if (!k437Names.length || k437Names.length > 2) return '';
+      if (k437Names.length === 2 && k437Names[0] !== '流星光') return '';
+      var k437Mat = k437Names.map(function (n) { return K437_MATERIAL_CODES[n] || ''; }).join('');
+      if (!sub.color1) return q + k437Mat + '????';
+      if (sub.color1 === '炫彩') return q + k437Mat + '1111';
+      var k437c1 = COLOR_CODES[sub.color1] || '??';
+      var k437c2 = (sub.color2 && sub.color2 !== '单色' && COLOR_CODES[sub.color2])
+                 ? COLOR_CODES[sub.color2] : '00';
+      return q + k437Mat + k437c1 + k437c2;
     }
 
     if (sub.weapon === 'MK4') {

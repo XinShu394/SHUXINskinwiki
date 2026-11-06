@@ -1037,6 +1037,180 @@ window.WIKI = {
    "chars": 209
   },
   {
+   "id": "选皮焚诀/K437/优品",
+   "section": "选皮焚诀",
+   "weapon": "K437",
+   "tier": "优品",
+   "collection": null,
+   "chapterNo": "",
+   "order": 9999,
+   "title": "K437 优品焚诀",
+   "summary": "K437 优品的填写大纲，结论还没写。",
+   "author": "SHUXIN",
+   "updated": "2026-11-06",
+   "status": "草稿",
+   "stability": "长期",
+   "lead": "<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：三到六句结论：这一档看哪几处，加上最重要的一两条建议。关键结论加粗，一段最多两三处。</p>",
+   "leadIsStub": false,
+   "stub": true,
+   "body": "<h3 id=\"s1\">看哪几处</h3>\n<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：看点列表。每一项写成「部位：说明」，要特写的在后面跟图片。列表紧接着单独一行整枪图，图片说明以「例枪」开头。看点和例枪之间不要插段落。</p>\n<h3 id=\"s2\">选法</h3>\n<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：磨损、颜色、天气或其他选法。没有就删掉这节。</p>\n<h3 id=\"s3\">配件颜色</h3>\n<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：有配件变色再写。没有就删掉这节。</p>\n<h3 id=\"s4\">推荐模板</h3>\n<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：放图片组，或写「图鉴：皮肤编号」。没有就删掉这节。</p>",
+   "ownNumbers": false,
+   "toc": [
+    {
+     "id": "s1",
+     "title": "看哪几处",
+     "level": 1
+    },
+    {
+     "id": "s2",
+     "title": "选法",
+     "level": 1
+    },
+    {
+     "id": "s3",
+     "title": "配件颜色",
+     "level": 1
+    },
+    {
+     "id": "s4",
+     "title": "推荐模板",
+     "level": 1
+    }
+   ],
+   "gallery": [
+    {
+     "weapon": "K437",
+     "note": "待补，对照时看哪几张图"
+    }
+   ],
+   "avoid": [
+    "K437 是本次版本新枪，材质最多两项，只有流星光能叠加第二项，写材质时按这个口径。",
+    "不写具体成交价。写到价格或行情时，把开头的「易变」改成「是」。"
+   ],
+   "images": 0,
+   "cards": 0,
+   "tables": 0,
+   "todo": 5,
+   "cover": null,
+   "chars": 201
+  },
+  {
+   "id": "选皮焚诀/K437/极品",
+   "section": "选皮焚诀",
+   "weapon": "K437",
+   "tier": "极品",
+   "collection": null,
+   "chapterNo": "",
+   "order": 9999,
+   "title": "K437 极品焚诀",
+   "summary": "K437 极品的填写大纲，结论还没写。",
+   "author": "SHUXIN",
+   "updated": "2026-11-06",
+   "status": "草稿",
+   "stability": "长期",
+   "lead": "<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：三到六句结论：这一档看哪几处，加上最重要的一两条建议。关键结论加粗，一段最多两三处。</p>",
+   "leadIsStub": false,
+   "stub": true,
+   "body": "<h3 id=\"s1\">看哪几处</h3>\n<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：看点列表。每一项写成「部位：说明」，要特写的在后面跟图片。列表紧接着单独一行整枪图，图片说明以「例枪」开头。看点和例枪之间不要插段落。</p>\n<h3 id=\"s2\">选法</h3>\n<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：磨损、颜色、天气或其他选法。没有就删掉这节。</p>\n<h3 id=\"s3\">配件颜色</h3>\n<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：有配件变色再写。没有就删掉这节。</p>\n<h3 id=\"s4\">推荐模板</h3>\n<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：放图片组，或写「图鉴：皮肤编号」。没有就删掉这节。</p>",
+   "ownNumbers": false,
+   "toc": [
+    {
+     "id": "s1",
+     "title": "看哪几处",
+     "level": 1
+    },
+    {
+     "id": "s2",
+     "title": "选法",
+     "level": 1
+    },
+    {
+     "id": "s3",
+     "title": "配件颜色",
+     "level": 1
+    },
+    {
+     "id": "s4",
+     "title": "推荐模板",
+     "level": 1
+    }
+   ],
+   "gallery": [
+    {
+     "weapon": "K437",
+     "note": "待补，对照时看哪几张图"
+    }
+   ],
+   "avoid": [
+    "K437 是本次版本新枪，材质最多两项，只有流星光能叠加第二项，写材质时按这个口径。",
+    "不写具体成交价。写到价格或行情时，把开头的「易变」改成「是」。"
+   ],
+   "images": 0,
+   "cards": 0,
+   "tables": 0,
+   "todo": 5,
+   "cover": null,
+   "chars": 201
+  },
+  {
+   "id": "选皮焚诀/K437/通用",
+   "section": "选皮焚诀",
+   "weapon": "K437",
+   "tier": "通用",
+   "collection": null,
+   "chapterNo": "",
+   "order": 9999,
+   "title": "K437 通用焚诀",
+   "summary": "K437 通用的填写大纲，结论还没写。",
+   "author": "SHUXIN",
+   "updated": "2026-11-06",
+   "status": "草稿",
+   "stability": "长期",
+   "lead": "<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：三到六句结论：不分优品、极品也能用的看法。只属于某一档的不要写在这里。关键结论加粗，一段最多两三处。</p>",
+   "leadIsStub": false,
+   "stub": true,
+   "body": "<h3 id=\"s1\">看哪几处</h3>\n<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：看点列表。每一项写成「部位：说明」，要特写的在后面跟图片。列表紧接着单独一行整枪图，图片说明以「例枪」开头。看点和例枪之间不要插段落。</p>\n<h3 id=\"s2\">选法</h3>\n<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：磨损、颜色、天气或其他选法。没有就删掉这节。</p>\n<h3 id=\"s3\">配件颜色</h3>\n<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：有配件变色再写。没有就删掉这节。</p>\n<h3 id=\"s4\">推荐模板</h3>\n<p class=\"todo\"><strong class=\"todo-tag\">待补</strong>：放图片组，或写「图鉴：皮肤编号」。没有就删掉这节。</p>",
+   "ownNumbers": false,
+   "toc": [
+    {
+     "id": "s1",
+     "title": "看哪几处",
+     "level": 1
+    },
+    {
+     "id": "s2",
+     "title": "选法",
+     "level": 1
+    },
+    {
+     "id": "s3",
+     "title": "配件颜色",
+     "level": 1
+    },
+    {
+     "id": "s4",
+     "title": "推荐模板",
+     "level": 1
+    }
+   ],
+   "gallery": [
+    {
+     "weapon": "K437",
+     "note": "待补，对照时看哪几张图"
+    }
+   ],
+   "avoid": [
+    "K437 是本次版本新枪，材质最多两项，只有流星光能叠加第二项，写材质时按这个口径。",
+    "不写具体成交价。写到价格或行情时，把开头的「易变」改成「是」。"
+   ],
+   "images": 0,
+   "cards": 0,
+   "tables": 0,
+   "todo": 5,
+   "cover": null,
+   "chars": 209
+  },
+  {
    "id": "选皮焚诀/KC17/优品",
    "section": "选皮焚诀",
    "weapon": "KC17",
@@ -2415,6 +2589,13 @@ window.WIKI = {
    "local": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/K416-命运王牌.png",
    "enabled": true
   },
+  "K437": {
+   "weapon": "K437",
+   "title": "K437-王者之剑",
+   "remote": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/K437-王者之剑.png",
+   "local": "https://skinwiki.oss-cn-guangzhou.aliyuncs.com/枪皮总封面/K437-王者之剑.png",
+   "enabled": true
+  },
   "KC17": {
    "weapon": "KC17",
    "title": "KC17-造物纪元",
@@ -2491,6 +2672,7 @@ window.WIKI = {
   "AUG",
   "AKM",
   "K416",
+  "K437",
   "KC17",
   "M250",
   "M4A1",
@@ -2525,6 +2707,6 @@ window.WIKI = {
   "Vector": 8,
   "腾龙": 32
  },
- "built": "2026-10-28",
+ "built": "2026-11-06",
  "site": true
 };
